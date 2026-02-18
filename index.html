@@ -100,8 +100,10 @@ scene.add(car);
 let inCar = false;
 let carAngle = 0;
 let moveX = 0;
-let moveY = 0;
-
+let moveY = 0;⁷
+let cameraAngle = 0;
+let cameraDistance = 6;
+let touchStartX = 0;нгг
 // джойстик
 let base = document.getElementById("joystickBase");
 let stick = document.getElementById("joystickStick");
@@ -144,8 +146,20 @@ inCar = true;
 inCar = false;
 }
 };
+document.addEventListener("touchstart", (e) => {
+    touchStartX = e.touches[0].clientX;
+});
 
-function animate(){
+document.addEventListener("touchmove", (e) => {
+    let deltaX = e.touches[0].clientX - touchStartX;
+    cameraAngle -= deltaX * 0.005;
+    touchStartX = e.touches[0].clientX;
+});
+function animate(){camera.position.x = player.position.x + Math.sin(cameraAngle) * cameraDistance;
+camera.position.z = player.position.z + Math.cos(cameraAngle) * cameraDistance;
+camera.position.y = player.position.y + 3;
+
+camera.lookAt(player.position);
 requestAnimationFrame(animate);
 
 let speed = 0.2;
