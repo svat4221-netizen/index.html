@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Mini GTA RP</title>
+<style>
+body { font-family: Arial; background:#111; color:white; text-align:center; }
+button { margin:5px; padding:10px; }
+#phone { border:1px solid white; padding:10px; margin-top:10px; }
+.player { padding:5px; margin:5px; background:#222; }
+</style>
+</head>
+<body>
+
+<h2>Mini GTA RP (GitHub Version)</h2>
+
+<input id="name" placeholder="Имя">
+<select id="faction">
+<option>Гражданский</option>
+<option>Полиция</option>
+<option>Медик</option>
+<option>Правительство</option>
+<option>Прокуратура</option>
+</select>
+<button onclick="join()">Войти</button>
+
+<div id="game" style="display:none;">
+
+<h3>Ваш профиль:</h3>
+<div id="profile"></div>
+
+<h3>Деньги: <span id="money">1000</span>$</h3>
+<button onclick="work()">Работать (+100$)</button>
+
+<h3>Действия фракций:</h3>
+<button onclick="arrest()">Арестовать</button>
+<button onclick="heal()">Лечить</button>
+
+<h3>Телефон (общий чат на устройстве)</h3>
+<div id="phone"></div>
+<input id="phoneInput">
+<button onclick="sendMessage()">Отправить</button>
+
+</div>
+
+<script>
+
+let player = {};
+let money = 1000;
+
+function join(){
+    player.name = document.getElementById("name").value;
+    player.faction = document.getElementById("faction").value;
+    
+    document.getElementById("profile").innerHTML =
+        player.name + " (" + player.faction + ")";
+    
+    document.getElementById("game").style.display = "block";
+}
+
+function work(){
+    money += 100;
+    document.getElementById("money").innerText = money;
+}
+
+function arrest(){
+    if(player.faction === "Полиция"){
+        alert("Вы кого-то арестовали!");
+    } else {
+        alert("Вы не полицейский!");
+    }
+}
+
+function heal(){
+    if(player.faction === "Медик"){
+        alert("Вы кого-то вылечили!");
+    } else {
+        alert("Вы не медик!");
+    }
+}
+
+function sendMessage(){
+    let msg = document.getElementById("phoneInput").value;
+    let phone = document.getElementById("phone");
+    
+    phone.innerHTML += "<p><b>"+player.name+":</b> "+msg+"</p>";
+}
+
+</script>
+
+</body>
+</html>
