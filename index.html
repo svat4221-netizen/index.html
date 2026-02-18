@@ -2,26 +2,47 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Mini GTA Web</title>
+<title>Mini GTA Mobile</title>
 <style>
-body { margin:0; overflow:hidden; }
-#ui {
-position: absolute;
-top: 10px;
-left: 10px;
-color: white;
-background: rgba(0,0,0,0.6);
-padding: 10px;
-font-family: Arial;
+body { margin:0; overflow:hidden; touch-action:none; }
+#enterBtn {
+position:absolute;
+right:20px;
+bottom:40px;
+width:70px;
+height:70px;
+border-radius:50%;
+background:red;
+color:white;
+font-size:16px;
+border:none;
+}
+#joystickBase {
+position:absolute;
+left:30px;
+bottom:40px;
+width:120px;
+height:120px;
+background:rgba(255,255,255,0.2);
+border-radius:50%;
+}
+#joystickStick {
+position:absolute;
+left:60px;
+bottom:70px;
+width:60px;
+height:60px;
+background:rgba(255,255,255,0.6);
+border-radius:50%;
+transform:translate(-50%,-50%);
 }
 </style>
 </head>
 <body>
 
-<div id="ui">
-WASD - движение<br>
-E - сесть / выйти
-</div>
+<button id="enterBtn">🚗</button>
+<div id="joystickBase"></div>
+<div id="joystickStick"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 
@@ -38,7 +59,6 @@ let light = new THREE.DirectionalLight(0xffffff,1);
 light.position.set(10,20,10);
 scene.add(light);
 
-// земля
 let ground = new THREE.Mesh(
 new THREE.PlaneGeometry(200,200),
 new THREE.MeshStandardMaterial({color:0x444444})
@@ -77,19 +97,53 @@ new THREE.MeshStandardMaterial({color:0xff0000})
 car.position.set(5,0.5,5);
 scene.add(car);
 
-let keys = {};
 let inCar = false;
 let carAngle = 0;
+let moveX = 0;
+let moveY = 0;
 
-document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+// джойстик
+let base = document.getElementById("joystickBase");
+let stick = document.getElementById("joystickStick");
 
-function distance(a,b){
-return Math.sqrt(
-Math.pow(a.position.x-b.position.x,2)+
-Math.pow(a.position.z-b.position.z,2)
-);
+base.addEventListener("touchmove", e=>{
+let touch = e.touches[0];
+let rect = base.getBoundingClientRect();
+let x = touch.clientX - rect.left - 60;
+let y = touch.clientY - rect.top - 60;
+
+let dist = Math.sqrt(x*x + y*y);
+let max = 50;
+if(dist > max){
+x = x/dist * max;
+y = y/dist * max;
 }
+
+stick.style.left = (rect.left + 60 + x) + "px";
+stick.style.top = (rect.top + 60 + y) + "px";
+
+moveX = x/50;
+moveY = y/50;
+});
+
+base.addEventListener("touchend", ()=>{
+moveX = 0;
+moveY = 0;
+stick.style.left = "60px";
+stick.style.top = "70px";
+});
+
+document.getElementById("enterBtn").onclick = ()=>{
+if(!inCar){
+let dx = player.position.x - car.position.x;
+let dz = player.position.z - car.position.z;
+if(Math.sqrt(dx*dx+dz*dz) < 4){
+inCar = true;
+}
+}else{
+inCar = false;
+}
+};
 
 function animate(){
 requestAnimationFrame(animate);
@@ -98,40 +152,24 @@ let speed = 0.2;
 
 if(!inCar){
 
-if(keys["w"]) player.position.z -= speed;
-if(keys["s"]) player.position.z += speed;
-if(keys["a"]) player.position.x -= speed;
-if(keys["d"]) player.position.x += speed;
-
-if(keys["e"] && distance(player,car)<4){
-inCar = true;
-}
+player.position.x += moveX * speed * 2;
+player.position.z += moveY * speed * 2;
 
 camera.position.set(
-player.position.x + 10,
-player.position.y + 10,
-player.position.z + 10
+player.position.x + 8,
+player.position.y + 8,
+player.position.z + 8
 );
 
 }else{
 
-if(keys["a"]) carAngle += 0.03;
-if(keys["d"]) carAngle -= 0.03;
+carAngle -= moveX * 0.05;
 
-if(keys["w"]){
-car.position.x -= Math.sin(carAngle)*speed*2;
-car.position.z -= Math.cos(carAngle)*speed*2;
-}
-
-if(keys["s"]){
-car.position.x += Math.sin(carAngle)*speed*2;
-car.position.z += Math.cos(carAngle)*speed*2;
-}
+car.position.x -= Math.sin(carAngle) * moveY * speed * 4;
+car.position.z -= Math.cos(carAngle) * moveY * speed * 4;
 
 car.rotation.y = carAngle;
 player.position.copy(car.position);
-
-if(keys["e"]) inCar = false;
 
 camera.position.set(
 car.position.x + Math.sin(carAngle)*10,
