@@ -2,31 +2,30 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Mini GTA RP</title>
+<title>Mini GTA Web</title>
 <style>
-body { margin: 0; overflow: hidden; }
-#info {
+body { margin:0; overflow:hidden; }
+#ui {
 position: absolute;
 top: 10px;
 left: 10px;
 color: white;
-font-family: Arial;
-background: rgba(0,0,0,0.5);
+background: rgba(0,0,0,0.6);
 padding: 10px;
+font-family: Arial;
 }
 </style>
 </head>
 <body>
 
-<div id="info">
+<div id="ui">
 WASD - движение<br>
-E - сесть / выйти из машины
+E - сесть / выйти
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 
 <script>
-
 let scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
 
@@ -35,48 +34,67 @@ let renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-let light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(5,10,7);
+let light = new THREE.DirectionalLight(0xffffff,1);
+light.position.set(10,20,10);
 scene.add(light);
 
+// земля
 let ground = new THREE.Mesh(
 new THREE.PlaneGeometry(200,200),
-new THREE.MeshStandardMaterial({color:0x228B22})
+new THREE.MeshStandardMaterial({color:0x444444})
 );
 ground.rotation.x = -Math.PI/2;
 scene.add(ground);
 
+// город
+for(let i=-50;i<=50;i+=10){
+for(let j=-50;j<=50;j+=10){
+if(Math.random()>0.7){
+let h = Math.random()*10+5;
+let building = new THREE.Mesh(
+new THREE.BoxGeometry(6,h,6),
+new THREE.MeshStandardMaterial({color:0x888888})
+);
+building.position.set(i,h/2,j);
+scene.add(building);
+}
+}
+}
+
+// игрок
 let player = new THREE.Mesh(
 new THREE.BoxGeometry(1,2,1),
 new THREE.MeshStandardMaterial({color:0x0000ff})
 );
-player.position.y = 1;
+player.position.y=1;
 scene.add(player);
 
+// машина
 let car = new THREE.Mesh(
 new THREE.BoxGeometry(3,1,2),
 new THREE.MeshStandardMaterial({color:0xff0000})
 );
-car.position.set(5,0.5,0);
+car.position.set(5,0.5,5);
 scene.add(car);
 
 let keys = {};
 let inCar = false;
+let carAngle = 0;
 
 document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
 function distance(a,b){
 return Math.sqrt(
-Math.pow(a.position.x - b.position.x,2) +
-Math.pow(a.position.z - b.position.z,2)
+Math.pow(a.position.x-b.position.x,2)+
+Math.pow(a.position.z-b.position.z,2)
 );
 }
 
 function animate(){
 requestAnimationFrame(animate);
 
-let speed = 0.1;
+let speed = 0.2;
 
 if(!inCar){
 
@@ -85,51 +103,54 @@ if(keys["s"]) player.position.z += speed;
 if(keys["a"]) player.position.x -= speed;
 if(keys["d"]) player.position.x += speed;
 
-if(keys["e"] && distance(player,car) < 3){
+if(keys["e"] && distance(player,car)<4){
 inCar = true;
 }
 
 camera.position.set(
-player.position.x,
-player.position.y + 5,
+player.position.x + 10,
+player.position.y + 10,
 player.position.z + 10
 );
 
 }else{
 
-if(keys["w"]) car.position.z -= speed*2;
-if(keys["s"]) car.position.z += speed*2;
-if(keys["a"]) car.position.x -= speed*2;
-if(keys["d"]) car.position.x += speed*2;
+if(keys["a"]) carAngle += 0.03;
+if(keys["d"]) carAngle -= 0.03;
 
-player.position.copy(car.position);
-
-if(keys["e"]){
-inCar = false;
+if(keys["w"]){
+car.position.x -= Math.sin(carAngle)*speed*2;
+car.position.z -= Math.cos(carAngle)*speed*2;
 }
 
-camera.position.set(
-car.position.x,
-car.position.y + 5,
-car.position.z + 10
-);
+if(keys["s"]){
+car.position.x += Math.sin(carAngle)*speed*2;
+car.position.z += Math.cos(carAngle)*speed*2;
+}
 
+car.rotation.y = carAngle;
+player.position.copy(car.position);
+
+if(keys["e"]) inCar = false;
+
+camera.position.set(
+car.position.x + Math.sin(carAngle)*10,
+car.position.y + 8,
+car.position.z + Math.cos(carAngle)*10
+);
 }
 
 camera.lookAt(player.position);
-
 renderer.render(scene,camera);
 }
 
 animate();
 
-window.addEventListener("resize", () => {
+window.addEventListener("resize",()=>{
 camera.aspect = window.innerWidth/window.innerHeight;
 camera.updateProjectionMatrix();
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(window.innerWidth,window.innerHeight);
 });
-
 </script>
 </body>
 </html>
-});;
