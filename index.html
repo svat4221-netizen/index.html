@@ -4,52 +4,136 @@
 <meta charset="UTF-8">
 <title>Mini GTA RP</title>
 <style>
-body { background:black; color:white; text-align:center; font-family:Arial; }
-button { padding:10px; margin:5px; }
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #111;
+    font-family: Arial;
+}
+#ui {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 10px;
+}
+canvas {
+    display: block;
+    background: #3e7f4f;
+}
+button { margin: 2px; }
 </style>
 </head>
 <body>
 
-<h2>Mini GTA RP</h2>
-
-<div id="login">
-<input id="name" placeholder="Имя"><br><br>
-<select id="faction">
-<option>Гражданский</option>
-<option>Полиция</option>
-<option>Медик</option>
-</select><br><br>
-<button onclick="join()">Войти</button>
+<div id="ui">
+    <div>Роль: <span id="role">Игрок</span></div>
+    <button onclick="setRole('Игрок')">Игрок</button>
+    <button onclick="setRole('Админ')">Админ</button>
+    <button onclick="setRole('Модератор')">Модератор</button>
+    <br><br>
+    <button onclick="joinFaction('Полиция')">Полиция</button>
+    <button onclick="joinFaction('Медики')">Медики</button>
+    <button onclick="joinFaction('Правительство')">Правительство</button>
+    <button onclick="joinFaction('Прокуратура')">Прокуратура</button>
+    <div>Фракция: <span id="faction">Нет</span></div>
 </div>
 
-<div id="game" style="display:none;">
-<h3 id="profile"></h3>
-<button onclick="work()">Работать (+100$)</button>
-<p>Деньги: <span id="money">1000</span>$</p>
-</div>
+<canvas id="game"></canvas>
 
 <script>
-let money = 1000;
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-function join(){
-    const name = document.getElementById("name").value;
-    const faction = document.getElementById("faction").value;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-    if(name === ""){
-        alert("Введите имя!");
-        return;
-    }
+const worldWidth = 2000;
+const worldHeight = 1500;
 
-    document.getElementById("login").style.display = "none";
-    document.getElementById("game").style.display = "block";
-    document.getElementById("profile").innerText = name + " (" + faction + ")";
+let player = {
+    x: 400,
+    y: 300,
+    size: 25,
+    speed: 5,
+    color: "cyan"
+};
+
+let bullets = [];
+let keys = {};
+
+let cars = [
+    {x: 800, y: 600, w: 70, h: 35},
+    {x: 1200, y: 400, w: 70, h: 35}
+];
+
+document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+canvas.addEventListener("click", e => {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    bullets.push({
+        x: player.x,
+        y: player.y,
+        dx: (mouseX - canvas.width/2) / 15,
+        dy: (mouseY - canvas.height/2) / 15
+    });
+});
+
+function setRole(role) {
+    document.getElementById("role").innerText = role;
 }
 
-function work(){
-    money += 100;
-    document.getElementById("money").innerText = money;
+function joinFaction(faction) {
+    document.getElementById("faction").innerText = faction;
 }
-</script>
 
-</body>
-</html>
+function update() {
+
+    if (keys["w"]) player.y -= player.speed;
+    if (keys["s"]) player.y += player.speed;
+    if (keys["a"]) player.x -= player.speed;
+    if (keys["d"]) player.x += player.speed;
+
+    player.x = Math.max(0, Math.min(worldWidth, player.x));
+    player.y = Math.max(0, Math.min(worldHeight, player.y));
+
+    bullets.forEach(b => {
+        b.x += b.dx;
+        b.y += b.dy;
+    });
+}
+
+function draw() {
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    const cameraX = player.x - canvas.width/2;
+    const cameraY = player.y - canvas.height/2;
+
+    ctx.save();
+    ctx.translate(-cameraX, -cameraY);
+
+    // дорога
+    ctx.fillStyle = "#444";
+    ctx.fillRect(0,700,2000,120);
+
+    // машины
+    ctx.fillStyle = "red";
+    cars.forEach(car => {
+        ctx.fillRect(car.x, car.y, car.w, car.h);
+    });
+
+    // игрок
+    ctx.fillStyle = player.color;
+    ctx.fillRect(player.x, player.y, player.size, player.size);
+
+    // пули
+    ctx.fillStyle = "yellow";
+    bullets.forEach(b => {
+        ctx.fillRect(b.x, b.y,
