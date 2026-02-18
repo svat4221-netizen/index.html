@@ -1,8 +1,7 @@
-
 import * as THREE from 'three';
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb); // голубое небо
+scene.background = new THREE.Color(0x87ceeb);
 
 const camera = new THREE.PerspectiveCamera(
   75,
@@ -10,54 +9,47 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(0, 20, 50);
 
-const renderer = new THREE.WebGLRenderer();
+camera.position.set(0, 40, 80);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(50, 100, 50);
+document.body.appendChild(renderer.domElement);
+
+renderer.shadowMap.enabled = true;
+
+// Свет
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(100, 200, 100);
+light.castShadow = true;
 scene.add(light);
 
 const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-scene.add(ambient);const groundGeometry = new THREE.PlaneGeometry(200, 200);
+scene.add(ambient);
+
+// Земля
+const groundGeometry = new THREE.PlaneGeometry(300, 300);
 const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x228b22 });
 const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-
 ground.rotation.x = -Math.PI / 2;
-scene.add(ground);function animate() {
-  requestAnimationFrame(animate);
-  renderer.render(scene, camera);
-}
+ground.receiveShadow = true;
+scene.add(ground);
 
-animate();const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(50, 100, 50);
-scene.add(light);
+// Город
+function createCity() {
+  for (let x = -100; x <= 100; x += 15) {
+    for (let z = -100; z <= 100; z += 15) {
 
-const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-scene.add(ambient);const groundGeometry = new THREE.PlaneGeometry(200, 200);
-const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x228b22 });
-const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      const height = Math.random() * 40 + 10;
 
-ground.rotation.x = -Math.PI / 2;
-scene.add(ground);function animate() {
-  requestAnimationFrame(animate);
-  renderer.render(scene, camera);
-}
-
-animate();function createCity() {
-  for (let x = -50; x <= 50; x += 10) {
-    for (let z = -50; z <= 50; z += 10) {
-
-      const height = Math.random() * 30 + 10;
-
-      const geometry = new THREE.BoxGeometry(6, height, 6);
+      const geometry = new THREE.BoxGeometry(10, height, 10);
       const material = new THREE.MeshStandardMaterial({
         color: Math.random() * 0xffffff
       });
 
       const building = new THREE.Mesh(geometry, material);
-
       building.position.set(x, height / 2, z);
+      building.castShadow = true;
 
       scene.add(building);
     }
@@ -65,3 +57,28 @@ animate();function createCity() {
 }
 
 createCity();
+
+// Управление
+window.addEventListener('keydown', (event) => {
+  const speed = 5;
+
+  if (event.key === 'w') camera.position.z -= speed;
+  if (event.key === 's') camera.position.z += speed;
+  if (event.key === 'a') camera.position.x -= speed;
+  if (event.key === 'd') camera.position.x += speed;
+});
+
+// Анимация
+function animate() {
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+
+animate();
+
+// Адаптация под экран
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});;
