@@ -2,12 +2,12 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Mini GTA RP</title>
+<title>Mini GTA RP Online</title>
 <style>
 body {
     margin: 0;
     overflow: hidden;
-    background: #111;
+    background: #222;
     font-family: Arial;
 }
 #ui {
@@ -15,15 +15,13 @@ body {
     top: 10px;
     left: 10px;
     color: white;
-    background: rgba(0,0,0,0.5);
-    padding: 10px;
-    border-radius: 10px;
 }
 canvas {
-    display: block;
-    background: #3e7f4f;
+    background: #4a7a4a;
 }
-button { margin: 2px; }
+button {
+    margin: 2px;
+}
 </style>
 </head>
 <body>
@@ -41,47 +39,36 @@ button { margin: 2px; }
     <div>Фракция: <span id="faction">Нет</span></div>
 </div>
 
-<canvas id="game"></canvas>
+<canvas id="game" width="1000" height="600"></canvas>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-const worldWidth = 2000;
-const worldHeight = 1500;
-
 let player = {
-    x: 400,
-    y: 300,
-    size: 25,
-    speed: 5,
-    color: "cyan"
+    x: 200,
+    y: 200,
+    size: 20,
+    speed: 4,
+    color: "blue"
 };
 
 let bullets = [];
-let keys = {};
-
 let cars = [
-    {x: 800, y: 600, w: 70, h: 35},
-    {x: 1200, y: 400, w: 70, h: 35}
+    {x: 500, y: 300, width: 60, height: 30}
 ];
 
-document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+let keys = {};
 
-canvas.addEventListener("click", e => {
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
 
+document.addEventListener("click", e => {
     bullets.push({
         x: player.x,
         y: player.y,
-        dx: (mouseX - canvas.width/2) / 15,
-        dy: (mouseY - canvas.height/2) / 15
+        dx: (e.clientX - player.x) / 20,
+        dy: (e.clientY - player.y) / 20
     });
 });
 
@@ -100,9 +87,6 @@ function update() {
     if (keys["a"]) player.x -= player.speed;
     if (keys["d"]) player.x += player.speed;
 
-    player.x = Math.max(0, Math.min(worldWidth, player.x));
-    player.y = Math.max(0, Math.min(worldHeight, player.y));
-
     bullets.forEach(b => {
         b.x += b.dx;
         b.y += b.dy;
@@ -110,23 +94,16 @@ function update() {
 }
 
 function draw() {
-
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    const cameraX = player.x - canvas.width/2;
-    const cameraY = player.y - canvas.height/2;
-
-    ctx.save();
-    ctx.translate(-cameraX, -cameraY);
-
-    // дорога
-    ctx.fillStyle = "#444";
-    ctx.fillRect(0,700,2000,120);
+    // дороги
+    ctx.fillStyle = "#555";
+    ctx.fillRect(0,250,1000,100);
 
     // машины
     ctx.fillStyle = "red";
     cars.forEach(car => {
-        ctx.fillRect(car.x, car.y, car.w, car.h);
+        ctx.fillRect(car.x, car.y, car.width, car.height);
     });
 
     // игрок
@@ -136,4 +113,18 @@ function draw() {
     // пули
     ctx.fillStyle = "yellow";
     bullets.forEach(b => {
-        ctx.fillRect(b.x, b.y,
+        ctx.fillRect(b.x, b.y, 5, 5);
+    });
+}
+
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
