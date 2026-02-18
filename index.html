@@ -1,95 +1,43 @@
-
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Mini GTA RP 3D</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<title>Mini Game</title>
 <style>
-body { margin:0; overflow:hidden; background:#000; }
-#ui {
-    position:absolute;
-    top:10px;
-    left:10px;
-    color:white;
-}
-button { margin:2px; }
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #222;
+  }
+
+  #player {
+    width: 40px;
+    height: 40px;
+    background: lime;
+    position: absolute;
+    left: 100px;
+    top: 100px;
+  }
 </style>
 </head>
 <body>
 
-<div id="ui">
-Роль: <span id="role">Игрок</span><br>
-Фракция: <span id="faction">Нет</span><br>
-<button onclick="setFaction('Полиция')">Полиция</button>
-<button onclick="setFaction('Медики')">Медики</button>
-<button onclick="setFaction('Правительство')">Правительство</button>
-<button onclick="setFaction('Прокуратура')">Прокуратура</button>
-</div>
+<div id="player"></div>
 
 <script>
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+  const player = document.getElementById("player");
+  let x = 100;
+  let y = 100;
 
-// Свет
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(5,10,5);
-scene.add(light);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "w") y -= 10;
+    if (e.key === "s") y += 10;
+    if (e.key === "a") x -= 10;
+    if (e.key === "d") x += 10;
 
-// Земля
-const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(200,200),
-    new THREE.MeshStandardMaterial({color:0x228822})
-);
-ground.rotation.x = -Math.PI/2;
-scene.add(ground);
-
-// Игрок
-const player = new THREE.Mesh(
-    new THREE.BoxGeometry(1,2,1),
-    new THREE.MeshStandardMaterial({color:0x00ffff})
-);
-player.position.y = 1;
-scene.add(player);
-
-// Машина
-const car = new THREE.Mesh(
-    new THREE.BoxGeometry(3,1,2),
-    new THREE.MeshStandardMaterial({color:0xff0000})
-);
-car.position.set(5,0.5,5);
-scene.add(car);
-
-camera.position.set(0,5,10);
-
-let keys = {};
-
-document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-
-function setFaction(name){
-    document.getElementById("faction").innerText = name;
-}
-
-function animate(){
-    requestAnimationFrame(animate);
-
-    if(keys["w"]) player.position.z -= 0.1;
-    if(keys["s"]) player.position.z += 0.1;
-    if(keys["a"]) player.position.x -= 0.1;
-    if(keys["d"]) player.position.x += 0.1;
-
-    camera.position.x = player.position.x;
-    camera.position.z = player.position.z + 10;
-    camera.lookAt(player.position);
-
-    renderer.render(scene, camera);
-}
-
-animate();
+    player.style.left = x + "px";
+    player.style.top = y + "px";
+  });
 </script>
 
 </body>
