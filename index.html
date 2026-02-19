@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -129,77 +130,7 @@ function createFaction(name, uniformColor){
 }
 
 // Игрок
-let playerData = {
-    name: "Игрок",
-    faction: null,
-    rank: null
-};
-};
-
-// Вступить во фракцию
-function joinFaction(name){
-    let f = factions[name];
-
-    if(player.faction){
-        alert("Вы уже состоите во фракции!");
-        return;
-    }
-
-    f.employees.push(player.name);
-    player.faction = name;
-    player.rank = "Сотрудник";
-
-    alert("Вы вступили в " + name);
-}
-
-// Назначить лидера
-function setLeader(name){
-    let f = factions[name];
-    f.leader = player.name;
-    player.faction = name;
-    player.rank = "Лидер";
-}
-
-// Назначить заместителя
-function setDeputy(name){
-    let f = factions[name];
-
-    if(f.leader !== player.name){
-        alert("Только лидер может назначить зама!");
-        return;
-    }
-
-    f.deputy = player.name;
-    player.rank = "Заместитель";
-}
-
-// Добавить клиента
-function addClient(name, clientName){
-    let f = factions[name];
-    f.clients.push(clientName);
-}
-
-// Выплата зарплаты
-function paySalary(){
-    if(!player.faction) return;
-
-    let f = factions[player.faction];
-
-    let salary = 0;
-
-    if(player.rank === "Лидер") salary = 1000;
-    if(player.rank === "Заместитель") salary = 700;
-    if(player.rank === "Сотрудник") salary = 500;
-
-    f.budget -= salary;
-
-    alert("Вы получили зарплату: " + salary);
-    }
-function joinFaction(name){
-factions[name].push("Игрок");
-alert("Вы вступили в " + name);
-    }
-function animate(){
+{
 requestAnimationFrame(animate);
 
 if(inCar){
