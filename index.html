@@ -1,47 +1,58 @@
-0<!DOCTYPE html>
+
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Mini GTA Mobile</title>
+<title>GTA Mobile</title>
 <style>
-body { margin:0; overflow:hidden; }
+body { margin:0; overflow:hidden; touch-action:none; }
 
-#ui {
+#joystick {
     position:absolute;
-    bottom:20px;
-    left:20px;
+    bottom:40px;
+    left:40px;
+    width:120px;
+    height:120px;
+    background:rgba(255,255,255,0.2);
+    border-radius:50%;
+}
+
+#stick {
+    width:60px;
+    height:60px;
+    background:rgba(255,255,255,0.6);
+    border-radius:50%;
+    position:absolute;
+    left:30px;
+    top:30px;
 }
 
 .btn {
-    width:60px;
-    height:60px;
+    position:absolute;
+    width:70px;
+    height:70px;
     background:rgba(255,255,255,0.5);
-    border-radius:10px;
-    margin:5px;
-    display:inline-block;
+    border-radius:15px;
     text-align:center;
-    line-height:60px;
-    font-size:20px;
-    user-select:none;
+    line-height:70px;
+    font-size:30px;
 }
 
-#enterBtn{
-    position:absolute;
-    bottom:20px;
-    right:20px;
-}
+#enter { bottom:40px; right:40px; }
+#gas { bottom:120px; right:40px; }
+#brake { bottom:200px; right:40px; }
+
 </style>
 </head>
 <body>
 
-<div id="ui">
-    <div id="up" class="btn">↑</div><br>
-    <div id="left" class="btn">←</div>
-    <div id="down" class="btn">↓</div>
-    <div id="right" class="btn">→</div>
+<div id="joystick">
+    <div id="stick"></div>
 </div>
 
-<div id="enterBtn" class="btn">E</div>
+<div id="enter" class="btn">🚗</div>
+<div id="gas" class="btn">⛽</div>
+<div id="brake" class="btn">🛑</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
@@ -51,14 +62,11 @@ body { margin:0; overflow:hidden; }
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
 
-const camera = new THREE.PerspectiveCamera(
-75, window.innerWidth/window.innerHeight, 0.1, 1000);
-
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// ===== СВЕТ =====
 scene.add(new THREE.AmbientLight(0xffffff,0.6));
 const light = new THREE.DirectionalLight(0xffffff,1);
 light.position.set(10,20,10);
@@ -88,38 +96,58 @@ new THREE.MeshStandardMaterial({color:0xff0000})
 car.position.set(5,0.5,0);
 scene.add(car);
 
-// ===== УПРАВЛЕНИЕ =====
+// ===== СОСТОЯНИЕ =====
+let inCar = false;
 let moveX = 0;
 let moveZ = 0;
-let inCar = false;
+let speed = 0;
+let cameraAngle = 0;
 
-function press(id, x, z){
-    document.getElementById(id).ontouchstart = ()=>{ moveX = x; moveZ = z; };
-    document.getElementById(id).ontouchend = ()=>{ moveX = 0; moveZ = 0; };
-}
+// ===== ДЖОЙСТИК =====
+const joystick = document.getElementById("joystick");
+const stick = document.getElementById("stick");
 
-press("up",0,-1);
-press("down",0,1);
-press("left",-1,0);
-press("right",1,0);
+joystick.addEventListener("touchmove",(e)=>{
+    let rect = joystick.getBoundingClientRect();
+    let x = e.touches[0].clientX - rect.left - 60;
+    let y = e.touches[0].clientY - rect.top - 60;
 
-document.getElementById("enterBtn").ontouchstart = ()=>{
-    const dist = player.position.distanceTo(car.position);
+    let max = 40;
+    let dist = Math.sqrt(x*x + y*y);
+    if(dist > max){
+        x *= max/dist;
+        y *= max/dist;
+    }
+
+    stick.style.left = (x+30)+"px";
+    stick.style.top = (y+30)+"px";
+
+    moveX = x/40;
+    moveZ = y/40;
+});
+
+joystick.addEventListener("touchend",()=>{
+    stick.style.left = "30px";
+    stick.style.top = "30px";
+    moveX = 0;
+    moveZ = 0;
+});
+
+// ===== КНОПКИ =====
+document.getElementById("enter").ontouchstart = ()=>{
+    let dist = player.position.distanceTo(car.position);
     if(dist < 3) inCar = !inCar;
 };
 
-// ===== КАМЕРА ПОВОРОТ ПАЛЬЦЕМ =====
-let angle = 0;
-let lastX = 0;
+document.getElementById("gas").ontouchstart = ()=> speed = 0.3;
+document.getElementById("gas").ontouchend = ()=> speed = 0;
 
-renderer.domElement.addEventListener("touchstart",(e)=>{
-    lastX = e.touches[0].clientX;
-});
+document.getElementById("brake").ontouchstart = ()=> speed = -0.2;
+document.getElementById("brake").ontouchend = ()=> speed = 0;
 
+// ===== ПОВОРОТ КАМЕРЫ =====
 renderer.domElement.addEventListener("touchmove",(e)=>{
-    let delta = e.touches[0].clientX - lastX;
-    angle += delta * 0.005;
-    lastX = e.touches[0].clientX;
+    cameraAngle += e.touches[0].movementX * 0.0005 || 0.01;
 });
 
 // ===== АНИМАЦИЯ =====
@@ -127,13 +155,18 @@ function animate(){
 requestAnimationFrame(animate);
 
 let target = inCar ? car : player;
-let speed = inCar ? 0.2 : 0.1;
 
-target.position.x += moveX * speed;
-target.position.z += moveZ * speed;
+if(!inCar){
+    target.position.x += moveX * 0.1;
+    target.position.z += moveZ * 0.1;
+}else{
+    target.position.x += Math.sin(cameraAngle) * speed;
+    target.position.z += Math.cos(cameraAngle) * speed;
+}
 
-const camX = target.position.x + 10*Math.sin(angle);
-const camZ = target.position.z + 10*Math.cos(angle);
+let camX = target.position.x + 10*Math.sin(cameraAngle);
+let camZ = target.position.z + 10*Math.cos(cameraAngle);
+
 camera.position.set(camX,5,camZ);
 camera.lookAt(target.position);
 
