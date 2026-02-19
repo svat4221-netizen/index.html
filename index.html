@@ -222,6 +222,45 @@ const ctx = minimap.getContext("2d");
 
 function updateMinimap(){
     ctx.clearRect(0,0,150,150);
+
+    ctx.fillStyle = "green";
+    ctx.fillRect(0,0,150,150);
+
+    let target = inCar ? car : player;
+
+    ctx.fillStyle = "blue";
+    ctx.beginPath();
+    ctx.arc(75,75,5,0,Math.PI*2);
+    ctx.fill();
+}
+
+function animate(){
+    requestAnimationFrame(animate);
+
+    let target = inCar ? car : player;
+
+    if(!inCar){
+        target.position.x += moveX * 0.1;
+        target.position.z += moveZ * 0.1;
+    }else{
+        target.position.x += Math.sin(cameraAngle) * speed;
+        target.position.z += Math.cos(cameraAngle) * speed;
+    }
+
+    updateMinimap();
+
+    let camX = target.position.x + 10*Math.sin(cameraAngle);
+    let camZ = target.position.z + 10*Math.cos(cameraAngle);
+
+    camera.position.set(camX,5,camZ);
+    camera.lookAt(target.position);
+
+    renderer.render(scene,camera);
+}
+
+animate();
+function updateMinimap(){
+    ctx.clearRect(0,0,150,150);
     }
 function animate(){
     requestAnimationFrame(animate);
@@ -248,15 +287,5 @@ function animate(){
 }
 
 animate();
-    ctx.fillStyle = "green";
-    ctx.fillRect(0,0,150,150);
-
-    let target = inCar ? car : player;
-
-    ctx.fillStyle = "blue";
-    ctx.beginPath();
-    ctx.arc(75,75,5,0,Math.PI*2);
-    ctx.fill();
-    }    
 </body>
 </html>
