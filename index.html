@@ -1,4 +1,4 @@
-
+⁷р
 <!DOCTYPE html>
 <html>
 <head>
@@ -178,9 +178,11 @@ function closeWeaponMenu(){
     document.getElementById("weaponMenu").style.display = "none";
 }
 
-document.getElementById("weaponBtn").onclick = ()=>{
-    document.getElementById("weaponMenu").style.display = "block";
-};    
+window.onload = function(){
+    document.getElementById("weaponBtn").onclick = function(){
+        document.getElementById("weaponMenu").style.display = "block";
+    };
+};
 animate();
  </script>   
 <!-- Миникарта -->
