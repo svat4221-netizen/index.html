@@ -1,208 +1,224 @@
+
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Mini GTA Mobile</title>
+<title>Mini GTA RP</title>
 <style>
-body { margin:0; overflow:hidden; touch-action:none; }
+body { margin: 0; overflow: hidden; }
 #enterBtn {
-position:absolute;
-right:20px;
-bottom:40px;
-width:70px;
-height:70px;
-border-radius:50%;
-background:red;
-color:white;
-font-size:16px;
-border:none;
-}
-#joystickBase {
-position:absolute;
-left:30px;
-bottom:40px;
-width:120px;
-height:120px;
-background:rgba(255,255,255,0.2);
-border-radius:50%;
-}
-#joystickStick {
-position:absolute;
-left:60px;
-bottom:70px;
-width:60px;
-height:60px;
-background:rgba(255,255,255,0.6);
-border-radius:50%;
-transform:translate(-50%,-50%);
+position: absolute;
+bottom: 20px;
+left: 50%;
+transform: translateX(-50%);
+padding: 15px 30px;
+background: black;
+color: white;
+font-size: 18px;
+border: none;
+display: none;
 }
 </style>
 </head>
 <body>
 
-<button id="enterBtn">🚗</button>
-<div id="joystickBase"></div>
-<div id="joystickStick"></div>
+<button id="enterBtn">Сесть в машину</button>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
 <script>
 let scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb);
-
 let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-let renderer = new THREE.WebGLRenderer({antialias:true});
+let renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-let light = new THREE.DirectionalLight(0xffffff,1);
-light.position.set(10,20,10);
+// Свет
+let light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(5, 10, 7);
 scene.add(light);
 
+// Земля
 let ground = new THREE.Mesh(
 new THREE.PlaneGeometry(200,200),
-new THREE.MeshStandardMaterial({color:0x444444})
+new THREE.MeshStandardMaterial({color: 0x444444})
 );
 ground.rotation.x = -Math.PI/2;
 scene.add(ground);
 
-// город
-for(let i=-50;i<=50;i+=10){
-for(let j=-50;j<=50;j+=10){
-if(Math.random()>0.7){
-let h = Math.random()*10+5;
-let building = new THREE.Mesh(
-new THREE.BoxGeometry(6,h,6),
-new THREE.MeshStandardMaterial({color:0x888888})
-);
-building.position.set(i,h/2,j);
-scene.add(building);
-}
-}
-}
-
-// игрок
+// Игрок
 let player = new THREE.Mesh(
 new THREE.BoxGeometry(1,2,1),
-new THREE.MeshStandardMaterial({color:0x0000ff})
+new THREE.MeshStandardMaterial({color: 0x00ff00})
 );
-player.position.y=1;
+player.position.y = 1;
 scene.add(player);
 
-// машина
+// Машина
 let car = new THREE.Mesh(
-new THREE.BoxGeometry(3,1,2),
-new THREE.MeshStandardMaterial({color:0xff0000})
+new THREE.BoxGeometry(3,1.5,2),
+new THREE.MeshStandardMaterial({color: 0xff0000})
 );
-car.position.set(5,0.5,5);
+car.position.set(5,0.75,0);
 scene.add(car);
 
 let inCar = false;
-let carAngle = 0;
-let moveX = 0;
-let moveY = 0;⁷
-let cameraAngle = 0;
-let cameraDistance = 6;
-let touchStartX = 0;нгг
-// джойстик
-let base = document.getElementById("joystickBase");
-let stick = document.getElementById("joystickStick");
 
-base.addEventListener("touchmove", e=>{
-let touch = e.touches[0];
-let rect = base.getBoundingClientRect();
-let x = touch.clientX - rect.left - 60;
-let y = touch.clientY - rect.top - 60;
+// Камера
+camera.position.set(0,5,10);
 
-let dist = Math.sqrt(x*x + y*y);
-let max = 50;
-if(dist > max){
-x = x/dist * max;
-y = y/dist * max;
+document.addEventListener("keydown", (e)=>{
+if(!inCar){
+if(e.key=="w") player.position.z -=0.3;
+if(e.key=="s") player.position.z +=0.3;
+if(e.key=="a") player.position.x -=0.3;
+if(e.key=="d") player.position.x +=0.3;
+}else{
+if(e.key=="w") car.position.z -=0.4;
+if(e.key=="s") car.position.z +=0.4;
+if(e.key=="a") car.position.x -=0.4;
+if(e.key=="d") car.position.x +=0.4;
 }
-
-stick.style.left = (rect.left + 60 + x) + "px";
-stick.style.top = (rect.top + 60 + y) + "px";
-
-moveX = x/50;
-moveY = y/50;
 });
 
-base.addEventListener("touchend", ()=>{
-moveX = 0;
-moveY = 0;
-stick.style.left = "60px";
-stick.style.top = "70px";
-});
+// Проверка расстояния до машины
+function checkCar(){
+let dist = player.position.distanceTo(car.position);
+if(dist < 3 && !inCar){
+document.getElementById("enterBtn").style.display="block";
+}else{
+document.getElementById("enterBtn").style.display="none";
+}
+}
 
 document.getElementById("enterBtn").onclick = ()=>{
-if(!inCar){
-let dx = player.position.x - car.position.x;
-let dz = player.position.z - car.position.z;
-if(Math.sqrt(dx*dx+dz*dz) < 4){
 inCar = true;
-}
-}else{
-inCar = false;
-}
+player.visible = false;
 };
-document.addEventListener("touchstart", (e) => {
-    touchStartX = e.touches[0].clientX;
-});
+let factions = {
+"Полиция": [],
+"Прокуратура": [],
+"Правительство": [],
+"Медики": [],
+"Мафия": [],
+"Частная клиника": [],
+"Ювелирная сеть": []
+};
+// ===== ФРАКЦИИ =====
 
-document.addEventListener("touchmove", (e) => {
-    let deltaX = e.touches[0].clientX - touchStartX;
-    cameraAngle -= deltaX * 0.005;
-    touchStartX = e.touches[0].clientX;
-});
-function animate(){camera.position.x = player.position.x + Math.sin(cameraAngle) * cameraDistance;
-camera.position.z = player.position.z + Math.cos(cameraAngle) * cameraDistance;
-camera.position.y = player.position.y + 3;
+let factions = {
+    "Полиция": createFaction("Полиция", "Синий"),
+    "Прокуратура": createFaction("Прокуратура", "Темно-синий"),
+    "Правительство": createFaction("Правительство", "Черный"),
+    "Медики": createFaction("Медики", "Белый"),
+    "Мафия": createFaction("Мафия", "Красный"),
+    "Частная клиника": createFaction("Частная клиника", "Розовый"),
+    "Ювелирная сеть": createFaction("Ювелирная сеть", "Золотой")
+};
 
-camera.lookAt(player.position);
+function createFaction(name, uniformColor){
+    return {
+        name: name,
+        leader: null,
+        deputy: null,
+        employees: [],
+        clients: [],
+        uniform: uniformColor,
+        budget: 10000
+    };
+}
+
+// Игрок
+let player = {
+    name: "Игрок",
+    faction: null,
+    rank: null
+};
+
+// Вступить во фракцию
+function joinFaction(name){
+    let f = factions[name];
+
+    if(player.faction){
+        alert("Вы уже состоите во фракции!");
+        return;
+    }
+
+    f.employees.push(player.name);
+    player.faction = name;
+    player.rank = "Сотрудник";
+
+    alert("Вы вступили в " + name);
+}
+
+// Назначить лидера
+function setLeader(name){
+    let f = factions[name];
+    f.leader = player.name;
+    player.faction = name;
+    player.rank = "Лидер";
+}
+
+// Назначить заместителя
+function setDeputy(name){
+    let f = factions[name];
+
+    if(f.leader !== player.name){
+        alert("Только лидер может назначить зама!");
+        return;
+    }
+
+    f.deputy = player.name;
+    player.rank = "Заместитель";
+}
+
+// Добавить клиента
+function addClient(name, clientName){
+    let f = factions[name];
+    f.clients.push(clientName);
+}
+
+// Выплата зарплаты
+function paySalary(){
+    if(!player.faction) return;
+
+    let f = factions[player.faction];
+
+    let salary = 0;
+
+    if(player.rank === "Лидер") salary = 1000;
+    if(player.rank === "Заместитель") salary = 700;
+    if(player.rank === "Сотрудник") salary = 500;
+
+    f.budget -= salary;
+
+    alert("Вы получили зарплату: " + salary);
+    }
+function joinFaction(name){
+factions[name].push("Игрок");
+alert("Вы вступили в " + name);
+    }
+function animate(){
 requestAnimationFrame(animate);
 
-let speed = 0.2;
-
-if(!inCar){
-
-player.position.x += moveX * speed * 2;
-player.position.z += moveY * speed * 2;
-
-camera.position.set(
-player.position.x + 8,
-player.position.y + 8,
-player.position.z + 8
+if(inCar){
+camera.position.lerp(
+new THREE.Vector3(car.position.x, car.position.y+5, car.position.z+10),
+0.1
 );
-
+camera.lookAt(car.position);
 }else{
-
-carAngle -= moveX * 0.05;
-
-car.position.x -= Math.sin(carAngle) * moveY * speed * 4;
-car.position.z -= Math.cos(carAngle) * moveY * speed * 4;
-
-car.rotation.y = carAngle;
-player.position.copy(car.position);
-
-camera.position.set(
-car.position.x + Math.sin(carAngle)*10,
-car.position.y + 8,
-car.position.z + Math.cos(carAngle)*10
+camera.position.lerp(
+new THREE.Vector3(player.position.x, player.position.y+5, player.position.z+10),
+0.1
 );
-}
-
 camera.lookAt(player.position);
-renderer.render(scene,camera);
 }
 
+checkCar();
+renderer.render(scene, camera);
+}
 animate();
-
-window.addEventListener("resize",()=>{
-camera.aspect = window.innerWidth/window.innerHeight;
-camera.updateProjectionMatrix();
-renderer.setSize(window.innerWidth,window.innerHeight);
-});
 </script>
 </body>
 </html>
