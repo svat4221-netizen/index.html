@@ -176,5 +176,42 @@ renderer.render(scene,camera);
 animate();
 
 </script>
+    <!-- Миникарта -->
+<canvas id="minimap" width="150" height="150"
+style="position:absolute;top:20px;right:20px;background:rgba(0,0,0,0.5);border-radius:10px;"></canvas>
+
+<!-- Кнопки -->
+<div id="inventoryBtn" style="position:absolute;top:20px;left:20px;
+width:60px;height:60px;background:rgba(255,255,255,0.6);
+border-radius:15px;text-align:center;line-height:60px;font-size:25px;">
+🎒
+</div>
+
+<div id="weaponBtn" style="position:absolute;top:100px;left:20px;
+width:60px;height:60px;background:rgba(255,255,255,0.6);
+border-radius:15px;text-align:center;line-height:60px;font-size:25px;">
+🔫
+</div>
+
+<!-- Меню оружия -->
+<div id="weaponMenu" style="
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:rgba(0,0,0,0.8);
+padding:20px;
+border-radius:15px;
+display:none;
+color:white;
+text-align:center;
+">
+<h3>Выбери оружие</h3>
+<div class="weapon">🔫 Пистолет</div>
+<div class="weapon">🔫 Дробовик</div>
+<div class="weapon">🔫 Автомат</div>
+<br>
+<button onclick="closeWeaponMenu()">Закрыть</button>
+</div>
 </body>
 </html>
