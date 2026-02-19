@@ -204,7 +204,7 @@ if(!inCar){
     target.position.x += Math.sin(cameraAngle) * speed;
     target.position.z += Math.cos(cameraAngle) * speed;
 }
-
+updateMinimap();
 let camX = target.position.x + 10*Math.sin(cameraAngle);
 let camZ = target.position.z + 10*Math.cos(cameraAngle);
 
@@ -215,14 +215,7 @@ renderer.render(scene,camera);
 }
 
 // ===== МЕНЮ ОРУЖИЯ =====
-function closeWeaponMenu(){
-    document.getElementById("weaponMenu").style.display = "none";
-}
 
-window.onload = function(){
-    document.getElementById("weaponBtn").onclick = function(){
-        document.getElementById("weaponMenu").style.display = "block";
-    };
 };
 animate();
  </script>   
