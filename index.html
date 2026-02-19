@@ -264,5 +264,151 @@ text-align:center;
 <br>
 <button onclick="closeWeaponMenu()">Закрыть</button>
 </div>
+<script>
+
+// ===== СЦЕНА =====
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.6));
+const light = new THREE.DirectionalLight(0xffffff,1);
+light.position.set(10,20,10);
+scene.add(light);
+
+// ===== ЗЕМЛЯ =====
+const ground = new THREE.Mesh(
+new THREE.PlaneGeometry(200,200),
+new THREE.MeshStandardMaterial({color:0x2e8b57})
+);
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
+
+// ===== ИГРОК =====
+const player = new THREE.Mesh(
+new THREE.BoxGeometry(1,2,1),
+new THREE.MeshStandardMaterial({color:0x0000ff})
+);
+player.position.y = 1;
+scene.add(player);
+
+// ===== МАШИНА =====
+const car = new THREE.Mesh(
+new THREE.BoxGeometry(2,1,4),
+new THREE.MeshStandardMaterial({color:0xff0000})
+);
+car.position.set(5,0.5,0);
+scene.add(car);
+
+// ===== СОСТОЯНИЕ =====
+let inCar = false;
+let moveX = 0;
+let moveZ = 0;
+let speed = 0;
+let cameraAngle = 0;
+
+// ===== ДЖОЙСТИК =====
+const joystick = document.getElementById("joystick");
+const stick = document.getElementById("stick");
+
+joystick.addEventListener("touchmove",(e)=>{
+    let rect = joystick.getBoundingClientRect();
+    let x = e.touches[0].clientX - rect.left - 60;
+    let y = e.touches[0].clientY - rect.top - 60;
+
+    let max = 40;
+    let dist = Math.sqrt(x*x + y*y);
+    if(dist > max){
+        x *= max/dist;
+        y *= max/dist;
+    }
+
+    stick.style.left = (x+30)+"px";
+    stick.style.top = (y+30)+"px";
+
+    moveX = x/40;
+    moveZ = y/40;
+});
+
+joystick.addEventListener("touchend",()=>{
+    stick.style.left = "30px";
+    stick.style.top = "30px";
+    moveX = 0;
+    moveZ = 0;
+});
+
+// ===== КНОПКИ =====
+document.getElementById("enter").ontouchstart = ()=>{
+    let dist = player.position.distanceTo(car.position);
+    if(dist < 3) inCar = !inCar;
+};
+
+document.getElementById("gas").ontouchstart = ()=> speed = 0.3;
+document.getElementById("gas").ontouchend = ()=> speed = 0;
+
+document.getElementById("brake").ontouchstart = ()=> speed = -0.2;
+document.getElementById("brake").ontouchend = ()=> speed = 0;
+
+// ===== ПОВОРОТ КАМЕРЫ =====
+renderer.domElement.addEventListener("touchmove",(e)=>{
+    cameraAngle += e.touches[0].movementX * 0.0005 || 0.01;
+});
+
+
+    // ====== ОРУЖИЕ ======
+let currentWeapon = "Нет";
+
+document.getElementById("weaponBtn").onclick = ()=>{
+    document.getElementById("weaponMenu").style.display = "block";
+};
+
+function closeWeaponMenu(){
+    document.getElementById("weaponMenu").style.display = "none";
+}
+
+document.querySelectorAll(".weapon").forEach(w=>{
+    w.onclick = ()=>{
+        currentWeapon = w.innerText;
+        alert("Выбрано: " + currentWeapon);
+        closeWeaponMenu();
+    };
+});
+
+
+// ====== ИНВЕНТАРЬ ======
+window.addEventListener("load", function(){
+
+document.getElementById("weaponBtn").onclick = ()=>{
+    document.getElementById("weaponMenu").style.display = "block";
+};
+
+document.getElementById("inventoryBtn").onclick = ()=>{
+    alert("Инвентарь:\nОружие: " + currentWeapon);
+};
+
+});
+    alert("Инвентарь:\nОружие: " + currentWeapon
+
+// ====== МИНИКАРТА ======
+const minimap = document.getElementById("minimap");
+const ctx = minimap.getContext("2d");
+
+function updateMinimap(){
+    ctx.clearRect(0,0,150,150);
+
+    ctx.fillStyle = "green";
+    ctx.fillRect(0,0,150,150);
+
+    let target = inCar ? car : player;
+
+    ctx.fillStyle = "blue";
+    ctx.beginPath();
+    ctx.arc(75,75,5,0,Math.PI*2);
+    ctx.fill();
+    }    
 </body>
 </html>
