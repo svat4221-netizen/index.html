@@ -93,6 +93,8 @@ document.getElementById("enterCar").onclick = function(){
         inCar = !inCar;
     }
 };
+
+    
 function animate(){
     requestAnimationFrame(animate);
 
@@ -109,6 +111,9 @@ function animate(){
         );
         camera.lookAt(player.position);
     }
+    window.onerror = function(message, source, lineno) {
+    alert("Ошибка: " + message + " | строка: " + lineno);
+};
 if(!inCar){
     player.position.x += moveX * 0.1;
     player.position.z += moveZ * 0.1;
