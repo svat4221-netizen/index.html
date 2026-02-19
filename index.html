@@ -1,39 +1,143 @@
-<!DOCTYPE html>
+0<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Test</title>
+<title>Mini GTA Mobile</title>
 <style>
 body { margin:0; overflow:hidden; }
+
+#ui {
+    position:absolute;
+    bottom:20px;
+    left:20px;
+}
+
+.btn {
+    width:60px;
+    height:60px;
+    background:rgba(255,255,255,0.5);
+    border-radius:10px;
+    margin:5px;
+    display:inline-block;
+    text-align:center;
+    line-height:60px;
+    font-size:20px;
+    user-select:none;
+}
+
+#enterBtn{
+    position:absolute;
+    bottom:20px;
+    right:20px;
+}
 </style>
 </head>
 <body>
+
+<div id="ui">
+    <div id="up" class="btn">↑</div><br>
+    <div id="left" class="btn">←</div>
+    <div id="down" class="btn">↓</div>
+    <div id="right" class="btn">→</div>
+</div>
+
+<div id="enterBtn" class="btn">E</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
 
-alert("Скрипт загрузился");
-
+// ===== СЦЕНА =====
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.z = 5;
+scene.background = new THREE.Color(0x87ceeb);
 
-const renderer = new THREE.WebGLRenderer();
+const camera = new THREE.PerspectiveCamera(
+75, window.innerWidth/window.innerHeight, 0.1, 1000);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const cube = new THREE.Mesh(
-    new THREE.BoxGeometry(),
-    new THREE.MeshBasicMaterial({color: 0x00ff00})
-);
-scene.add(cube);
+// ===== СВЕТ =====
+scene.add(new THREE.AmbientLight(0xffffff,0.6));
+const light = new THREE.DirectionalLight(0xffffff,1);
+light.position.set(10,20,10);
+scene.add(light);
 
+// ===== ЗЕМЛЯ =====
+const ground = new THREE.Mesh(
+new THREE.PlaneGeometry(200,200),
+new THREE.MeshStandardMaterial({color:0x2e8b57})
+);
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
+
+// ===== ИГРОК =====
+const player = new THREE.Mesh(
+new THREE.BoxGeometry(1,2,1),
+new THREE.MeshStandardMaterial({color:0x0000ff})
+);
+player.position.y = 1;
+scene.add(player);
+
+// ===== МАШИНА =====
+const car = new THREE.Mesh(
+new THREE.BoxGeometry(2,1,4),
+new THREE.MeshStandardMaterial({color:0xff0000})
+);
+car.position.set(5,0.5,0);
+scene.add(car);
+
+// ===== УПРАВЛЕНИЕ =====
+let moveX = 0;
+let moveZ = 0;
+let inCar = false;
+
+function press(id, x, z){
+    document.getElementById(id).ontouchstart = ()=>{ moveX = x; moveZ = z; };
+    document.getElementById(id).ontouchend = ()=>{ moveX = 0; moveZ = 0; };
+}
+
+press("up",0,-1);
+press("down",0,1);
+press("left",-1,0);
+press("right",1,0);
+
+document.getElementById("enterBtn").ontouchstart = ()=>{
+    const dist = player.position.distanceTo(car.position);
+    if(dist < 3) inCar = !inCar;
+};
+
+// ===== КАМЕРА ПОВОРОТ ПАЛЬЦЕМ =====
+let angle = 0;
+let lastX = 0;
+
+renderer.domElement.addEventListener("touchstart",(e)=>{
+    lastX = e.touches[0].clientX;
+});
+
+renderer.domElement.addEventListener("touchmove",(e)=>{
+    let delta = e.touches[0].clientX - lastX;
+    angle += delta * 0.005;
+    lastX = e.touches[0].clientX;
+});
+
+// ===== АНИМАЦИЯ =====
 function animate(){
-    requestAnimationFrame(animate);
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
-    renderer.render(scene, camera);
+requestAnimationFrame(animate);
+
+let target = inCar ? car : player;
+let speed = inCar ? 0.2 : 0.1;
+
+target.position.x += moveX * speed;
+target.position.z += moveZ * speed;
+
+const camX = target.position.x + 10*Math.sin(angle);
+const camZ = target.position.z + 10*Math.cos(angle);
+camera.position.set(camX,5,camZ);
+camera.lookAt(target.position);
+
+renderer.render(scene,camera);
 }
 
 animate();
