@@ -151,6 +151,47 @@ renderer.domElement.addEventListener("touchmove",(e)=>{
 });
 
 // ===== АНИМАЦИЯ =====
+    // ====== ОРУЖИЕ ======
+let currentWeapon = "Нет";
+
+document.getElementById("weaponBtn").onclick = ()=>{
+    document.getElementById("weaponMenu").style.display = "block";
+};
+
+function closeWeaponMenu(){
+    document.getElementById("weaponMenu").style.display = "none";
+}
+
+document.querySelectorAll(".weapon").forEach(w=>{
+    w.onclick = ()=>{
+        currentWeapon = w.innerText;
+        alert("Выбрано: " + currentWeapon);
+        closeWeaponMenu();
+    };
+});
+
+// ====== ИНВЕНТАРЬ ======
+document.getElementById("inventoryBtn").onclick = ()=>{
+    alert("Инвентарь:\nОружие: " + currentWeapon);
+};
+
+// ====== МИНИКАРТА ======
+const minimap = document.getElementById("minimap");
+const ctx = minimap.getContext("2d");
+
+function updateMinimap(){
+    ctx.clearRect(0,0,150,150);
+
+    ctx.fillStyle = "green";
+    ctx.fillRect(0,0,150,150);
+
+    let target = inCar ? car : player;
+
+    ctx.fillStyle = "blue";
+    ctx.beginPath();
+    ctx.arc(75,75,5,0,Math.PI*2);
+    ctx.fill();
+    }
 function animate(){
 requestAnimationFrame(animate);
 
