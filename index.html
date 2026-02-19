@@ -216,13 +216,13 @@ document.querySelectorAll(".weapon").forEach(w=>{
 document.getElementById("inventoryBtn").onclick = ()=>{
     alert("Инвентарь:\nОружие: " + currentWeapon);
 };
-
 // ====== МИНИКАРТА ======
 const minimap = document.getElementById("minimap");
 const ctx = minimap.getContext("2d");
 
 function updateMinimap(){
     ctx.clearRect(0,0,150,150);
+    }
 function animate(){
     requestAnimationFrame(animate);
 
