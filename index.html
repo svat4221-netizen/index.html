@@ -1,35 +1,20 @@
-
-
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Mini GTA RP</title>
+<title>GTA MiniRP</title>
 <style>
 body { margin: 0; overflow: hidden; }
-#enterBtn {
-position: absolute;
-bottom: 20px;
-left: 50%;
-transform: translateX(-50%);
-padding: 15px 30px;
-background: black;
-color: white;
-font-size: 18px;
-border: none;
-display: none;
-}
 </style>
 </head>
 <body>
-
-<button id="enterBtn">Сесть в машину</button>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
 <script>
 let scene = new THREE.Scene();
 let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+
 let renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
@@ -41,116 +26,68 @@ scene.add(light);
 
 // Земля
 let ground = new THREE.Mesh(
-new THREE.PlaneGeometry(200,200),
-new THREE.MeshStandardMaterial({color: 0x444444})
+    new THREE.PlaneGeometry(200,200),
+    new THREE.MeshStandardMaterial({color: 0x444444})
 );
 ground.rotation.x = -Math.PI/2;
 scene.add(ground);
 
 // Игрок
 let player = new THREE.Mesh(
-new THREE.BoxGeometry(1,2,1),
-new THREE.MeshStandardMaterial({color: 0x00ff00})
+    new THREE.BoxGeometry(1,2,1),
+    new THREE.MeshStandardMaterial({color: 0x00ff00})
 );
 player.position.y = 1;
 scene.add(player);
 
 // Машина
 let car = new THREE.Mesh(
-new THREE.BoxGeometry(3,1.5,2),
-new THREE.MeshStandardMaterial({color: 0xff0000})
+    new THREE.BoxGeometry(3,1.5,2),
+    new THREE.MeshStandardMaterial({color: 0xff0000})
 );
 car.position.set(5,0.75,0);
 scene.add(car);
 
 let inCar = false;
 
-// Камера
 camera.position.set(0,5,10);
 
 document.addEventListener("keydown", (e)=>{
-if(!inCar){
-if(e.key=="w") player.position.z -=0.3;
-if(e.key=="s") player.position.z +=0.3;
-if(e.key=="a") player.position.x -=0.3;
-if(e.key=="d") player.position.x +=0.3;
-}else{
-if(e.key=="w") car.position.z -=0.4;
-if(e.key=="s") car.position.z +=0.4;
-if(e.key=="a") car.position.x -=0.4;
-if(e.key=="d") car.position.x +=0.4;
-}
+    if(!inCar){
+        if(e.key=="w") player.position.z -=0.3;
+        if(e.key=="s") player.position.z +=0.3;
+        if(e.key=="a") player.position.x -=0.3;
+        if(e.key=="d") player.position.x +=0.3;
+    }else{
+        if(e.key=="w") car.position.z -=0.4;
+        if(e.key=="s") car.position.z +=0.4;
+        if(e.key=="a") car.position.x -=0.4;
+        if(e.key=="d") car.position.x +=0.4;
+    }
 });
 
-// Проверка расстояния до машины
-function checkCar(){
-let dist = player.position.distanceTo(car.position);
-if(dist < 3 && !inCar){
-document.getElementById("enterBtn").style.display="block";
-}else{
-document.getElementById("enterBtn").style.display="none";
-}
-}
+function animate(){
+    requestAnimationFrame(animate);
 
-document.getElementById("enterBtn").onclick = ()=>{
-inCar = true;
-player.visible = false;
-};
-let factions = {
-"Полиция": [],
-"Прокуратура": [],
-"Правительство": [],
-"Медики": [],
-"Мафия": [],
-"Частная клиника": [],
-"Ювелирная сеть": []
-};
-// ===== ФРАКЦИИ =====
+    if(inCar){
+        camera.position.lerp(
+            new THREE.Vector3(car.position.x, car.position.y+5, car.position.z+10),
+            0.1
+        );
+        camera.lookAt(car.position);
+    }else{
+        camera.position.lerp(
+            new THREE.Vector3(player.position.x, player.position.y+5, player.position.z+10),
+            0.1
+        );
+        camera.lookAt(player.position);
+    }
 
-let factions = {
-    "Полиция": createFaction("Полиция", "Синий"),
-    "Прокуратура": createFaction("Прокуратура", "Темно-синий"),
-    "Правительство": createFaction("Правительство", "Черный"),
-    "Медики": createFaction("Медики", "Белый"),
-    "Мафия": createFaction("Мафия", "Красный"),
-    "Частная клиника": createFaction("Частная клиника", "Розовый"),
-    "Ювелирная сеть": createFaction("Ювелирная сеть", "Золотой")
-};
-
-function createFaction(name, uniformColor){
-    return {
-        name: name,
-        leader: null,
-        deputy: null,
-        employees: [],
-        clients: [],
-        uniform: uniformColor,
-        budget: 10000
-    };
+    renderer.render(scene, camera);
 }
 
-// Игрок
-{
-requestAnimationFrame(animate);
-
-if(inCar){
-camera.position.lerp(
-new THREE.Vector3(car.position.x, car.position.y+5, car.position.z+10),
-0.1
-);
-camera.lookAt(car.position);
-}else{
-camera.position.lerp(
-new THREE.Vector3(player.position.x, player.position.y+5, player.position.z+10),
-0.1
-);
-camera.lookAt(player.position);
-}
-
-checkCar();
-renderer.render(scene, camera);
-}
 animate();
 </script>
+
 </body>
 </html>
