@@ -1,4 +1,4 @@
-6<!DOCTYPE html>
+76<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -65,7 +65,34 @@ document.addEventListener("keydown", (e)=>{
         if(e.key=="d") car.position.x +=0.4;
     }
 });
+let moveX = 0;
+let moveZ = 0;
 
+let joystick = document.getElementById("joystick");
+
+joystick.addEventListener("touchmove", function(e){
+    let touch = e.touches[0];
+    let rect = joystick.getBoundingClientRect();
+
+    let x = touch.clientX - rect.left - 50;
+    let y = touch.clientY - rect.top - 50;
+
+    moveX = x / 50;
+    moveZ = y / 50;
+});
+
+joystick.addEventListener("touchend", function(){
+    moveX = 0;
+    moveZ = 0;
+});
+
+document.getElementById("enterCar").onclick = function(){
+    let dist = player.position.distanceTo(car.position);
+
+    if(dist < 3){
+        inCar = !inCar;
+    }
+};
 function animate(){
     requestAnimationFrame(animate);
 
@@ -82,7 +109,13 @@ function animate(){
         );
         camera.lookAt(player.position);
     }
-
+if(!inCar){
+    player.position.x += moveX * 0.1;
+    player.position.z += moveZ * 0.1;
+}else{
+    car.position.x += moveX * 0.15;
+    car.position.z += moveZ * 0.15;
+        }
     renderer.render(scene, camera);
 }
 
