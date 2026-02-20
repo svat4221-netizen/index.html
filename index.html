@@ -185,9 +185,16 @@ document.getElementById("gas").ontouchend = ()=> speed = 0;
 document.getElementById("brake").ontouchstart = ()=> speed = -0.2;
 document.getElementById("brake").ontouchend = ()=> speed = 0;
 
-// ===== ПОВОРОТ КАМЕРЫ =====
+let lastTouchX = 0;
+
+renderer.domElement.addEventListener("touchstart",(e)=>{
+    lastTouchX = e.touches[0].clientX;
+});
+
 renderer.domElement.addEventListener("touchmove",(e)=>{
-    cameraAngle += e.touches[0].movementX * 0.0005 || 0.01;
+    let deltaX = e.touches[0].clientX - lastTouchX;
+    cameraAngle += deltaX * 0.005;
+    lastTouchX = e.touches[0].clientX;
 });
 
 
