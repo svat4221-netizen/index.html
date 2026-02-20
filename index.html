@@ -235,7 +235,15 @@ function updateMinimap(){
 
 function animate(){
     requestAnimationFrame(animate);
+let target = inCar ? car : player;
 
+    if(!inCar){
+        target.position.x += moveX * 0.1;
+        target.position.z += moveZ * 0.1;
+    }else{
+        target.position.x += Math.sin(cameraAngle) * speed;
+        target.position.z += Math.cos(cameraAngle) * speed;
+    }
     
 
 
