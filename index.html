@@ -1,63 +1,106 @@
-// GTA RP Browser Script
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Pyongyang 3D Simulator</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; }
+        #ui { position: absolute; top: 20px; left: 20px; color: white; font-family: sans-serif; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <h1>Симулятор Пхеньяна 3D</h1>
+        <p>Статус: Гражданин</p>
+        <p>Клавиши: Церемониальный проезд кортежа...</p>
+    </div>
 
-// сцена
-const scene = new THREE.Scene();
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
 
-// камера
-const camera = new THREE.PerspectiveCamera(
-75,
-window.innerWidth / window.innerHeight,
-0.1,
-1000
-);
+    <script type="module">
+        import * as THREE from 'three';
 
-// рендер
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+        // 1. Сцена и Камера
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87ceeb); // Голубое небо
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-// свет
-const light = // 1. Настройка управления (Pointer Lock)
-const canvas = document.querySelector('#gameCanvas');
-canvas.onclick = () => canvas.requestPointerLock();
+        // 2. Свет
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 10, 7.5).normalize();
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
 
-// 2. Обработка движения (WASD)
-let keys = {};
-document.onkeydown = (e) => keys[e.code] = true;
-document.onkeyup = (e) => keys[e.code] = false;
+        // 3. Дорога
+        const roadGeo = new THREE.PlaneGeometry(20, 1000);
+        const roadMat = new THREE.MeshPhongMaterial({ color: 0x333333 });
+        const road = new THREE.Mesh(roadGeo, roadMat);
+        road.rotation.x = -Math.PI / 2;
+        scene.add(road);
 
-// 3. Логика игрока
-class Player {
-    constructor() {
-        this.position = { x: 0, y: 0, z: 0 };
-        this.rotation = { x: 0, y: 0 };
-        this.health = 100;
-    }
+        // Вспомогательная функция для создания машин
+        function createCar(color, zPos, xPos, name) {
+            const group = new THREE.Group();
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(1.5, 0.8, 3),
+                new THREE.MeshPhongMaterial({ color: color })
+            );
+            body.position.y = 0.4;
+            group.add(body);
+            group.position.set(xPos, 0, zPos);
+            scene.add(group);
+            return group;
+        }
 
-    update() {
-        if (keys['KeyW']) this.position.z -= 0.1;
-        if (keys['KeyS']) this.position.z += 0.1;
-        if (keys['KeyA']) this.position.x -= 0.1;
-        if (keys['KeyD']) this.position.x += 0.1;
-    }
+        // 4. Объекты
+        const presidentCar = createCar(0xffd700, -20, 2, "Президент"); // Золотой лимузин
+        const policeCar = createCar(0x0000ff, 10, -2, "Полиция");   // Синяя полиция
+        
+        // Декорации (простые дома)
+        for(let i = 0; i < 10; i++) {
+            const building = new THREE.Mesh(
+                new THREE.BoxGeometry(5, 15, 5),
+                new THREE.MeshPhongMaterial({ color: 0xaaaaaa })
+            );
+            building.position.set(15, 7.5, -i * 30);
+            scene.add(building);
+        }
 
-    shoot() {
-        console.log("Выстрел! Проверка попадания через Raycasting...");
-        // В реальности здесь идет расчет пересечения луча с моделями врагов
-    }
-}
+        camera.position.set(0, 5, 15);
+        camera.lookAt(0, 0, -20);
 
-// 4. Игровой цикл
-const player = new Player();
-function gameLoop() {
-    player.update();
-    // Тут должен быть рендеринг 3D сцены (Three.js или WebGL)
-    requestAnimationFrame(gameLoop);
-}
+        // 5. Анимация
+        function animate() {
+            requestAnimationFrame(animate);
 
-// Слушаем нажатие мыши (стрельба)
-document.addEventListener('mousedown', () => {
-    if (document.pointerLockElement === canvas) player.shoot();
-});
+            // Движение машин
+            presidentCar.position.z -= 0.1;
+            policeCar.position.z -= 0.05;
 
-gameLoop();
+            // Камера следует за кортежем (опционально)
+            camera.position.z = presidentCar.position.z + 15;
+            camera.lookAt(0, 0, presidentCar.position.z - 10);
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Адаптация под размер окна
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
