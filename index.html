@@ -3,38 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPRK: Open World</title>
+    <title>DPRK: City Districts RP</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #2c3e50; touch-action: none; font-family: sans-serif; }
-        #hud { position: absolute; top: 15px; left: 15px; color: white; pointer-events: none; z-index: 10; text-shadow: 2px 2px 4px #000; }
-        #phone-btn { position: absolute; bottom: 25px; right: 25px; width: 70px; height: 70px; background: #c0392b; border-radius: 50%; border: 3px solid #fff; z-index: 20; display: flex; align-items: center; justify-content: center; font-size: 30px; }
-        #phone { position: absolute; bottom: -100%; left: 50%; transform: translateX(-50%); width: 90%; height: 60%; background: #111; border-radius: 30px 30px 0 0; transition: 0.4s; z-index: 30; padding: 20px; color: #fff; border: 2px solid #333; }
+        body { margin: 0; overflow: hidden; background: #34495e; touch-action: none; font-family: 'Arial', sans-serif; }
+        #hud { position: absolute; top: 15px; left: 15px; color: #fff; pointer-events: none; z-index: 10; text-shadow: 2px 2px 4px #000; }
+        #phone-btn { position: absolute; bottom: 25px; right: 25px; width: 70px; height: 70px; background: #d35400; border-radius: 50%; border: 3px solid #fff; z-index: 20; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        #phone { position: absolute; bottom: -100%; left: 50%; transform: translateX(-50%); width: 85%; height: 70%; background: #1a1a1a; border-radius: 30px 30px 0 0; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 30; padding: 25px; color: #fff; border: 2px solid #444; }
         #phone.active { bottom: 0; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .btn { background: #222; border: 1px solid #444; color: #fff; padding: 15px; border-radius: 10px; }
-        #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; z-index: 20; }
+        .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
+        .app-item { background: #2c3e50; border: 1px solid #555; color: #fff; padding: 20px; border-radius: 15px; font-size: 14px; text-align: center; font-weight: bold; }
+        #joystick-zone { position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; z-index: 20; }
+        .stat-line { width: 100px; height: 5px; background: #555; margin-top: 5px; }
+        .stat-fill { height: 100%; background: #e74c3c; width: 80%; }
     </style>
 </head>
 <body>
 
     <div id="hud">
-        <div style="font-weight: bold;">ПХЕНЬЯН: ОТКРЫТЫЙ МИР</div>
-        <div id="coords">Район: Мансудэ</div>
+        <div style="font-size: 20px; letter-spacing: 1px;"><b>ПХЕНЬЯН RP</b></div>
+        <div id="location">Локация: Проспект Победы</div>
+        <div class="stat-line"><div class="stat-fill"></div></div>
     </div>
 
     <div id="joystick-zone"></div>
     <div id="phone-btn" onclick="togglePhone()">📱</div>
 
     <div id="phone">
-        <center><strong>ПХЕНЬЯН-OS</strong></center>
-        <div class="grid">
-            <button class="btn" onclick="msg('Связь с ЦК...')">📞 Связь</button>
-            <button class="btn" onclick="msg('Доставка авто...')">🚗 Гараж</button>
-            <button class="btn" onclick="msg('Сонбун: 100')">📊 Статус</button>
-            <button class="btn" onclick="togglePhone()">❌ Выход</button>
+        <center>
+            <div style="width: 50px; height: 5px; background: #333; border-radius: 10px; margin-bottom: 10px;"></div>
+            <strong>ПХЕНЬЯН 2412 - СИСТЕМА</strong>
+        </center>
+        <div class="app-grid">
+            <div class="app-item" onclick="app('report')">📢 ДОНОС</div>
+            <div class="app-item" onclick="app('garage')">🚗 ГАРАЖ</div>
+            <div class="app-item" onclick="app('market')">🛒 РЫНОК</div>
+            <div class="app-item" onclick="app('stats')">📈 РАНГ</div>
         </div>
-        <div id="console" style="color:#0f0; margin-top:20px; font-size:12px;">> Система готова...</div>
+        <div id="display" style="margin-top: 30px; background: #000; padding: 15px; border-radius: 10px; color: #0f0; font-family: monospace; font-size: 12px; height: 80px; border: 1px solid #333;">
+            > Ожидание команд...
+        </div>
+        <button onclick="togglePhone()" style="width:100%; margin-top:15px; background:transparent; border:1px solid #666; color:#999; padding:10px; border-radius:10px;">ЗАКРЫТЬ</button>
     </div>
 
     <script type="importmap">
@@ -44,91 +53,134 @@
     <script type="module">
         import * as THREE from 'three';
 
-        // --- 1. ИНИЦИАЛИЗАЦИЯ ---
+        // --- 1. НАСТРОЙКИ МИРА ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x445566);
-        // ТУМАН: скрывает обрыв карты
-        scene.fog = new THREE.Fog(0x445566, 10, 150); 
+        scene.background = new THREE.Color(0x2c3e50);
+        scene.fog = new THREE.Fog(0x2c3e50, 20, 180);
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambient);
         const sun = new THREE.DirectionalLight(0xffffff, 1);
-        sun.position.set(10, 50, 10);
+        sun.position.set(50, 100, 50);
         scene.add(sun);
 
-        // --- 2. КАРТА (ГРАНИЦЫ И ГОРОД) ---
-        const WORLD_SIZE = 400; // Размер города
-
-        // Земля
-        const ground = new THREE.Mesh(
-            new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE),
-            new THREE.MeshPhongMaterial({ color: 0x222222 })
-        );
-        ground.rotation.x = -Math.PI/2;
+        // --- 2. ГЕНЕРАЦИЯ ГОРОДА (Кварталы) ---
+        const CITY_SIZE = 500;
+        
+        // Главная площадь и дороги
+        const groundGeo = new THREE.PlaneGeometry(CITY_SIZE, CITY_SIZE);
+        const groundMat = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
         scene.add(ground);
 
-        // Разные здания
-        function createBuilding(x, z) {
-            const h = 15 + Math.random() * 40;
-            const w = 8 + Math.random() * 7;
-            const colors = [0x7f8c8d, 0x95a5a6, 0x566573, 0x2c3e50];
+        // Рисуем разметку дорог (сетка)
+        for(let i = -CITY_SIZE/2; i <= CITY_SIZE/2; i += 50) {
+            const row = new THREE.Mesh(new THREE.PlaneGeometry(CITY_SIZE, 10), new THREE.MeshBasicMaterial({color: 0x333333}));
+            row.rotation.x = -Math.PI/2;
+            row.position.set(0, 0.01, i);
+            scene.add(row);
             
+            const col = new THREE.Mesh(new THREE.PlaneGeometry(10, CITY_SIZE), new THREE.MeshBasicMaterial({color: 0x333333}));
+            col.rotation.x = -Math.PI/2;
+            col.position.set(i, 0.02, 0);
+            scene.add(col);
+        }
+
+        // Типы зданий
+        function addNKBuilding(x, z) {
+            const type = Math.random();
+            let h, w, color;
+
+            if(type > 0.8) { // Небоскреб
+                h = 60 + Math.random()*40; w = 12; color = 0x95a5a6;
+            } else if(type > 0.4) { // Хрущевка
+                h = 20 + Math.random()*10; w = 20; color = 0x7f8c8d;
+            } else { // Административное здание
+                h = 15; w = 25; color = 0xbdc3c7;
+            }
+
             const geo = new THREE.BoxGeometry(w, h, w);
-            const mat = new THREE.MeshPhongMaterial({ color: colors[Math.floor(Math.random()*colors.length)] });
+            const mat = new THREE.MeshPhongMaterial({ color: color });
             const b = new THREE.Mesh(geo, mat);
             b.position.set(x, h/2, z);
             scene.add(b);
+
+            // Окна
+            if(h > 10) {
+                const winGeo = new THREE.PlaneGeometry(1, 1.5);
+                const winMat = new THREE.MeshBasicMaterial({color: 0xffffcc});
+                for(let level = 4; level < h-4; level += 5) {
+                    const win = new THREE.Mesh(winGeo, winMat);
+                    win.position.set(x + w/2 + 0.1, level, z);
+                    win.rotation.y = Math.PI/2;
+                    scene.add(win);
+                }
+            }
         }
 
-        // Заполняем город (кроме дороги)
-        for(let i = 0; i < 150; i++) {
-            let rx = (Math.random() - 0.5) * WORLD_SIZE;
-            let rz = (Math.random() - 0.5) * WORLD_SIZE;
-            // Оставляем проезд для дороги в центре
-            if (Math.abs(rx) > 15) createBuilding(rx, rz);
+        // Заполнение кварталов
+        for(let x = -CITY_SIZE/2 + 25; x < CITY_SIZE/2; x += 50) {
+            for(let z = -CITY_SIZE/2 + 25; z < CITY_SIZE/2; z += 50) {
+                if(Math.abs(x) > 10 && Math.abs(z) > 10) { // Не ставим здания на главные дороги
+                    addNKBuilding(x + (Math.random()-0.5)*10, z + (Math.random()-0.5)*10);
+                }
+            }
         }
 
         // --- 3. ИГРОК ---
-        const car = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.2, 5), new THREE.MeshPhongMaterial({color: 0x000000}));
-        body.position.y = 0.6;
-        car.add(body);
-        scene.add(car);
+        const player = new THREE.Group();
+        const carBody = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.2, 5), new THREE.MeshPhongMaterial({color: 0x050505}));
+        carBody.position.y = 0.6;
+        player.add(carBody);
+        
+        // Фары
+        const lGeo = new THREE.BoxGeometry(0.6, 0.3, 0.1);
+        const lMat = new THREE.MeshBasicMaterial({color: 0xffffff});
+        const f1 = new THREE.Mesh(lGeo, lMat); f1.position.set(0.8, 0.6, -2.5);
+        const f2 = new THREE.Mesh(lGeo, lMat); f2.position.set(-0.8, 0.6, -2.5);
+        player.add(f1, f2);
 
-        // --- 4. УПРАВЛЕНИЕ И ГРАНИЦЫ ---
-        let moveZ = 0, moveX = 0;
-        const joy = nipplejs.create({ zone: document.getElementById('joystick-zone'), mode: 'static', position: {left:'60px', bottom:'60px'}, color:'white'});
+        scene.add(player);
+
+        // --- 4. ЛОГИКА ---
+        let mZ = 0, mX = 0;
+        const joy = nipplejs.create({zone: document.getElementById('joystick-zone'), mode: 'static', position: {left: '60px', bottom: '60px'}, color: 'white'});
         
         joy.on('move', (e, d) => {
-            moveZ = -d.vector.y * 0.5;
-            moveX = -d.vector.x * 0.07;
+            mZ = -d.vector.y * 0.6;
+            mX = -d.vector.x * 0.08;
         });
-        joy.on('end', () => { moveZ = 0; moveX = 0; });
+        joy.on('end', () => { mZ = 0; mX = 0; });
 
         window.togglePhone = () => document.getElementById('phone').classList.toggle('active');
-        window.msg = (t) => document.getElementById('console').innerText = "> " + t;
+        window.app = (n) => {
+            const d = document.getElementById('display');
+            if(n === 'report') d.innerText = "> СООБЩЕНИЕ: Сосед слушает K-POP. Группе захвата выехать.";
+            if(n === 'garage') d.innerText = "> ГАРАЖ: Ваш лимузин подан к подъезду.";
+            if(n === 'market') d.innerText = "> РЫНОК: Рис в наличии (1кг за 500 вон).";
+            if(n === 'stats') d.innerText = "> СТАТУС: Лояльность 100%. Вы примерный гражданин.";
+        };
 
         function animate() {
             requestAnimationFrame(animate);
+            player.translateZ(mZ);
+            player.rotation.y += mX;
 
-            // Движение
-            car.translateZ(moveZ);
-            car.rotation.y += moveX;
-
-            // ГРАНИЦЫ КАРТЫ: не даем выехать за WORLD_SIZE
-            const limit = WORLD_SIZE / 2 - 5;
-            if (car.position.x > limit) car.position.x = limit;
-            if (car.position.x < -limit) car.position.x = -limit;
-            if (car.position.z > limit) car.position.z = limit;
-            if (car.position.z < -limit) car.position.z = -limit;
+            // Ограничение карты
+            const lim = CITY_SIZE/2 - 10;
+            player.position.x = Math.max(-lim, Math.min(lim, player.position.x));
+            player.position.z = Math.max(-lim, Math.min(lim, player.position.z));
 
             // Камера
-            camera.position.lerp(new THREE.Vector3(car.position.x, 10, car.position.z + 18), 0.1);
-            camera.lookAt(car.position);
+            const goal = new THREE.Vector3(player.position.x, 12, player.position.z + 20);
+            camera.position.lerp(goal, 0.1);
+            camera.lookAt(player.position);
 
             renderer.render(scene, camera);
         }
@@ -142,5 +194,5 @@
     </script>
 </body>
 </html>
- 
+
 
