@@ -3,54 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPRK Mobile RP</title>
+    <title>DPRK: Pyongyang RP Mobile</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; touch-action: none; font-family: sans-serif; }
-        #hud { position: absolute; top: 10px; left: 10px; color: white; pointer-events: none; z-index: 10; text-shadow: 1px 1px 2px black; }
-        .bar { width: 120px; height: 8px; background: rgba(0,0,0,0.5); border: 1px solid #fff; margin-top: 5px; }
-        .fill { height: 100%; background: #44ff44; width: 100%; }
+        body { margin: 0; overflow: hidden; background: #87ceeb; touch-action: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        /* Верхний интерфейс (HUD) */
+        #hud { position: absolute; top: 15px; left: 15px; color: white; pointer-events: none; z-index: 10; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
+        .bar-bg { width: 150px; height: 10px; background: rgba(0,0,0,0.5); border: 1.5px solid #fff; margin-top: 5px; border-radius: 5px; }
+        .bar-fill { height: 100%; background: #2ecc71; width: 100%; border-radius: 3px; }
+
+        /* Кнопка телефона */
         #phone-btn { 
-            position: absolute; bottom: 20px; right: 20px; width: 65px; height: 65px; 
-            background: #cc0000; border-radius: 50%; border: 3px solid #fff; color: white;
-            font-size: 28px; display: flex; align-items: center; justify-content: center; z-index: 20;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            position: absolute; bottom: 25px; right: 25px; width: 70px; height: 70px; 
+            background: #e74c3c; border-radius: 50%; border: 3px solid #fff; color: white;
+            font-size: 30px; display: flex; align-items: center; justify-content: center; z-index: 20;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); active { transform: scale(0.9); }
         }
+
+        /* Выезжающий телефон */
         #phone { 
             position: absolute; bottom: -100%; left: 50%; transform: translateX(-50%);
-            width: 85%; height: 60%; background: #1a1a1a; border: 3px solid #333; 
-            border-radius: 30px 30px 0 0; transition: bottom 0.4s ease;
-            z-index: 30; padding: 20px; box-sizing: border-box; color: #fff;
+            width: 90%; height: 65%; background: #1c1c1c; border: 4px solid #333; 
+            border-radius: 35px 35px 0 0; transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 30; padding: 25px; box-sizing: border-box; color: #fff;
         }
         #phone.active { bottom: 0; }
-        .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        .app-btn { background: #333; border: 1px solid #444; color: white; padding: 15px; border-radius: 12px; font-size: 14px; }
-        #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; z-index: 20; opacity: 0.5; }
+        .phone-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
+        .phone-btn { background: #2c3e50; border: 1px solid #444; color: white; padding: 18px; border-radius: 15px; font-size: 14px; font-weight: bold; }
+        #console { margin-top: 20px; font-size: 13px; color: #2ecc71; background: #000; padding: 12px; border-radius: 10px; height: 60px; overflow: hidden; border: 1px solid #333; }
+
+        /* Зона для пальца (джойстик) */
+        #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 140px; height: 140px; z-index: 20; }
     </style>
 </head>
 <body>
 
     <div id="hud">
-        <div id="status"><b>ПХЕНЬЯН: РАЙОН МАНСУДЭ</b></div>
-        <div>Гражданин: svat4221</div>
-        <div class="bar"><div class="fill"></div></div>
+        <div style="font-size: 18px; font-weight: bold;">ПХЕНЬЯН: ЦЕНТР</div>
+        <div id="rank">Статус: Рядовой гражданин</div>
+        <div class="bar-bg"><div class="bar-fill"></div></div>
     </div>
 
     <div id="joystick-zone"></div>
     <div id="phone-btn" onclick="togglePhone()">📱</div>
 
     <div id="phone">
-        <center><div style="width: 50px; height: 5px; background: #555; border-radius: 5px; margin-bottom: 15px;"></div>
-        <strong>ПХЕНЬЯН-OS v1.0</strong></center>
-        <div class="app-grid">
-            <button class="app-btn" onclick="action('car')">🚗 Мой Гараж</button>
-            <button class="app-btn" onclick="action('weapon')">🔫 Оружие</button>
-            <button class="app-btn" onclick="action('job')">⚒️ Работа</button>
-            <button class="app-btn" onclick="togglePhone()" style="background: #600;">❌ Выйти</button>
+        <center>
+            <div style="width: 60px; height: 6px; background: #444; border-radius: 10px; margin-bottom: 15px;"></div>
+            <span style="letter-spacing: 2px; font-weight: bold;">ПХЕНЬЯН 2412 PRO</span>
+        </center>
+        <div class="phone-grid">
+            <button class="phone-btn" onclick="app('car')">🚕 ГАРАЖ</button>
+            <button class="phone-btn" onclick="app('gun')">🔫 АРСЕНАЛ</button>
+            <button class="phone-btn" onclick="app('map')">🗺️ КАРТА</button>
+            <button class="phone-btn" onclick="togglePhone()" style="background: #7b241c;">❌ ВЫХОД</button>
         </div>
-        <div id="logs" style="margin-top: 25px; font-size: 13px; color: #0f0; background: #000; padding: 10px; border-radius: 5px;">
-            Система готова к работе...
-        </div>
+        <div id="console">> Система активна...</div>
     </div>
 
     <script type="importmap">
@@ -60,91 +69,121 @@
     <script type="module">
         import * as THREE from 'three';
 
-        // 1. СЦЕНА
+        // --- 1. ОСНОВА ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87ceeb);
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        scene.background = new THREE.Color(0x87ceeb); // Голубое небо
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-        const sun = new THREE.DirectionalLight(0xffffff, 0.8);
-        sun.position.set(10, 20, 10);
+        // Свет
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(ambientLight);
+        const sun = new THREE.DirectionalLight(0xffffff, 1);
+        sun.position.set(50, 100, 50);
         scene.add(sun);
 
-        // 2. МИР
-        const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 2000), new THREE.MeshPhongMaterial({color: 0x333333}));
-        ground.rotation.x = -Math.PI/2;
-        scene.add(ground);
+        // --- 2. ОКРУЖЕНИЕ ---
+        // Асфальт
+        const roadGeo = new THREE.PlaneGeometry(60, 5000);
+        const roadMat = new THREE.MeshPhongMaterial({ color: 0x2c3e50 });
+        const road = new THREE.Mesh(roadGeo, roadMat);
+        road.rotation.x = -Math.PI / 2;
+        scene.add(road);
 
-        // Функция создания здания с окнами
-        function createBuilding(x, z, h, color) {
+        // Функция зданий
+        function createHouse(x, z, h, color) {
             const group = new THREE.Group();
-            const body = new THREE.Mesh(new THREE.BoxGeometry(10, h, 10), new THREE.MeshPhongMaterial({color: color}));
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(15, h, 15),
+                new THREE.MeshPhongMaterial({ color: color })
+            );
             group.add(body);
-            
-            // Окна
-            const winGeo = new THREE.PlaneGeometry(0.8, 1.2);
-            const winMat = new THREE.MeshBasicMaterial({color: 0xffffaa});
-            for(let y = 5; y < h-2; y+=4) {
-                const win = new THREE.Mesh(winGeo, winMat);
-                win.position.set(5.01, y - h/2, 0);
-                win.rotation.y = Math.PI/2;
-                group.add(win);
-            }
 
+            // Окна
+            const winGeo = new THREE.PlaneGeometry(1.5, 2);
+            const winMat = new THREE.MeshBasicMaterial({ color: 0xfdfd96 });
+            for (let y = 5; y < h - 5; y += 6) {
+                for (let off = -5; off <= 5; off += 5) {
+                    const w = new THREE.Mesh(winGeo, winMat);
+                    w.position.set(x > 0 ? -7.6 : 7.6, y - h/2, off);
+                    w.rotation.y = x > 0 ? -Math.PI/2 : Math.PI/2;
+                    group.add(w);
+                }
+            }
             group.position.set(x, h/2, z);
             scene.add(group);
         }
 
-        // Застройка улицы
-        for(let i = 0; i < 30; i++) {
-            createBuilding(20, -i * 35, 30 + Math.random()*40, 0x8899aa);
-            createBuilding(-20, -i * 35, 30 + Math.random()*40, 0x9988aa);
+        // Расставляем город вокруг игрока
+        for (let i = 0; i < 60; i++) {
+            let zPos = -i * 40 + 100; // Начинаем чуть сзади игрока и уходим вперед
+            createHouse(40, zPos, 30 + Math.random() * 60, 0x95a5a6); // Справа
+            createHouse(-40, zPos, 30 + Math.random() * 60, 0x7f8c8d); // Слева
         }
 
-        // 3. ИГРОК (МАШИНА)
-        const car = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.2, 4.5), new THREE.MeshPhongMaterial({color: 0x111111}));
-        body.position.y = 0.6;
-        car.add(body);
-        scene.add(car);
+        // --- 3. ИГРОК (МАШИНА) ---
+        const player = new THREE.Group();
+        const body = new THREE.Mesh(
+            new THREE.BoxGeometry(3, 1.5, 6),
+            new THREE.MeshPhongMaterial({ color: 0x000000 }) // Черный правительственный седан
+        );
+        body.position.y = 0.75;
+        player.add(body);
 
-        // 4. УПРАВЛЕНИЕ
-        let moveX = 0, moveZ = 0;
-        const joystick = nipplejs.create({
+        // Фары
+        const lamp = new THREE.BoxGeometry(0.8, 0.4, 0.2);
+        const lampMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const f1 = new THREE.Mesh(lamp, lampMat); f1.position.set(1, 0.6, -3);
+        const f2 = new THREE.Mesh(lamp, lampMat); f2.position.set(-1, 0.6, -3);
+        player.add(f1, f2);
+
+        scene.add(player);
+
+        // --- 4. УПРАВЛЕНИЕ ---
+        let vX = 0, vZ = 0;
+        const joy = nipplejs.create({
             zone: document.getElementById('joystick-zone'),
             mode: 'static',
-            position: { left: '60px', bottom: '60px' },
+            position: { left: '70px', bottom: '70px' },
             color: 'white'
         });
 
-        joystick.on('move', (evt, data) => {
-            moveZ = -data.vector.y * 0.4; // Скорость
-            moveX = -data.vector.x * 0.06; // Поворот
+        joy.on('move', (e, d) => {
+            vZ = -d.vector.y * 0.6; // Движение
+            vX = -d.vector.x * 0.07; // Поворот
         });
-        joystick.on('end', () => { moveX = 0; moveZ = 0; });
+        joy.on('end', () => { vX = 0; vZ = 0; });
 
         window.togglePhone = () => document.getElementById('phone').classList.toggle('active');
-        window.action = (t) => {
-            const l = document.getElementById('logs');
-            if(t === 'car') l.innerText = "> Авто: Черный седан готов";
-            if(t === 'weapon') l.innerText = "> Ошибка: Нужно разрешение МВД";
-            if(t === 'job') l.innerText = "> Работа: Смена на заводе через 2 часа";
+        window.app = (type) => {
+            const c = document.getElementById('console');
+            if(type === 'car') c.innerText = "> ГАРАЖ: Машина Пхеньян-79 готова.";
+            if(type === 'gun') c.innerText = "> ОШИБКА: Доступ только для офицеров.";
+            if(type === 'map') c.innerText = "> КАРТА: Вы на проспекте Мира.";
         };
 
-        // 5. ЦИКЛ
-        function animate() {
-            requestAnimationFrame(animate);
-            car.translateZ(moveZ);
-            car.rotation.y += moveX;
-            camera.position.lerp(new THREE.Vector3(car.position.x, 12, car.position.z + 18), 0.1);
-            camera.lookAt(car.position);
+        // --- 5. АНИМАЦИЯ ---
+        function run() {
+            requestAnimationFrame(run);
+            
+            // Движение машины
+            player.translateZ(vZ);
+            player.rotation.y += vX;
+
+            // Плавная камера (вид сзади)
+            const camOffset = new THREE.Vector3(0, 12, 25);
+            camOffset.applyQuaternion(player.quaternion);
+            camera.position.lerp(player.position.clone().add(camOffset), 0.1);
+            camera.lookAt(player.position);
+
             renderer.render(scene, camera);
         }
-        animate();
+        run();
 
+        // Ресайз
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -153,3 +192,4 @@
     </script>
 </body>
 </html>
+
