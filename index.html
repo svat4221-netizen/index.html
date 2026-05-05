@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPRK: Mercedes Drive v8.7</title>
+    <title>DPRK: Mercedes Fix v8.9</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background: #1a1a1a; touch-action: none; font-family: sans-serif; }
         #hud { position: absolute; top: 15px; left: 15px; color: #fff; z-index: 10; text-shadow: 2px 2px 4px #000; pointer-events: none; }
+        
+        /* Кнопки */
         #phone-btn { position: absolute; bottom: 20px; right: 20px; width: 65px; height: 65px; background: #c0392b; border-radius: 50%; border: 3px solid #fff; z-index: 100; display: flex; align-items: center; justify-content: center; font-size: 28px; }
         #fire-btn { position: absolute; bottom: 110px; right: 20px; width: 75px; height: 75px; background: rgba(231, 76, 60, 0.8); border-radius: 50%; border: 3px solid #fff; z-index: 90; display: none; align-items: center; justify-content: center; font-size: 30px; }
         #exit-btn { position: absolute; bottom: 110px; left: 20px; padding: 15px; background: rgba(0,0,0,0.8); color: white; border: 1px solid #fff; border-radius: 10px; display: none; z-index: 90; font-weight: bold; }
 
-        /* ИНТЕРФЕЙС ТЕЛЕФОНА */
+        /* ТЕЛЕФОН */
         #phone { position: absolute; bottom: -100%; left: 50%; transform: translateX(-50%); width: 95%; height: 85%; background: #0a0a0a; border-radius: 35px 35px 0 0; transition: 0.4s; z-index: 200; padding: 15px; border: 2px solid #333; box-sizing: border-box; }
         #phone.active { bottom: 0; }
         #phone-display { background: #111; height: 100%; border-radius: 20px; padding: 15px; color: #fff; display: flex; flex-direction: column; overflow: hidden; }
+        
         .app-page { display: none; flex-direction: column; height: 100%; }
         .app-page.active { display: flex; }
         .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
@@ -24,7 +27,7 @@
         
         #chat-content { flex-grow: 1; background: #000; border-radius: 10px; padding: 10px; overflow-y: auto; font-size: 12px; margin-bottom: 10px; }
         #chat-input-row { display: flex; gap: 5px; }
-        #chat-input { flex-grow: 1; background: #222; border: 1px solid #444; color: #fff; padding: 5px; border-radius: 5px; }
+        #chat-input { flex-grow: 1; background: #222; border: 1px solid #444; color: #fff; padding: 5px; border-radius: 5px; outline: none; }
 
         #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; z-index: 50; }
     </style>
@@ -44,7 +47,7 @@
     <div id="phone">
         <div id="phone-display">
             <div id="p-main" class="app-page active">
-                <center><h4 style="color:#c0392b; margin:0 0 10px 0;">KORYO v8.7</h4></center>
+                <center><h4 style="color:#c0392b; margin:0 0 10px 0;">KORYO v8.9</h4></center>
                 <div class="app-grid">
                     <div class="app-item" onclick="openApp('ars')"><div class="icon-sq">🔫</div>Арсенал</div>
                     <div class="app-item" onclick="openApp('msg')"><div class="icon-sq">💬</div>Чат</div>
@@ -54,18 +57,18 @@
                 </div>
             </div>
             <div id="p-msg" class="app-page">
-                <button onclick="openApp('main')">←</button>
+                <button onclick="openApp('main')" style="width: 50px; background: #333; color: white; border: none; border-radius: 5px;">←</button>
                 <div id="chat-content"></div>
                 <div id="chat-input-row">
-                    <input type="text" id="chat-input">
-                    <button onclick="sendMessage()">▶</button>
+                    <input type="text" id="chat-input" placeholder="...">
+                    <button onclick="sendMessage()" style="background:#c0392b; color:#fff; border:none; padding:5px 10px; border-radius:5px;">▶</button>
                 </div>
             </div>
             <div id="p-ars" class="app-page">
-                <button onclick="openApp('main')">←</button>
+                <button onclick="openApp('main')" style="width: 50px; background: #333; color: white; border: none; border-radius: 5px;">←</button>
                 <div style="margin-top:10px;">
-                    <button onclick="takeWeapon('M4A1')" style="width:100%; margin-bottom:5px;">M4A1 Desert</button>
-                    <button onclick="takeWeapon('Deagle')" style="width:100%; margin-bottom:5px;">Desert Eagle</button>
+                    <button onclick="takeWeapon('M4A1')" style="width:100%; padding: 10px; margin-bottom:5px; background: #2c3e50; color: white; border: 1px solid #444; border-radius: 5px;">M4A1 Desert</button>
+                    <button onclick="takeWeapon('Deagle')" style="width:100%; padding: 10px; margin-bottom:5px; background: #2c3e50; color: white; border: 1px solid #444; border-radius: 5px;">Desert Eagle</button>
                 </div>
             </div>
         </div>
@@ -84,11 +87,15 @@
         import * as THREE from 'three';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-        // ИНИЦИАЛИЗАЦИЯ
+        // --- ДВИЖОК И МИР ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x2c3e50);
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({antialias:true});
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        // Начальная позиция камеры (высоко и сзади)
+        camera.position.set(0, 15, 30);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
@@ -98,13 +105,15 @@
         scene.add(sun);
 
         const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.MeshPhongMaterial({color: 0x1a1a1a}));
-        ground.rotation.x = -Math.PI/2;
+        ground.rotation.x = -Math.PI / 2;
         scene.add(ground);
 
         // ГОРОД
+        const buildingMat = new THREE.MeshPhongMaterial({color: 0x7f8c8d});
         for(let i = -10; i < 10; i++) {
+            if(i === 0) continue; // Оставляем пустой проезд в центре
             const h = 20 + Math.random()*20;
-            const b = new THREE.Mesh(new THREE.BoxGeometry(15, h, 20), new THREE.MeshPhongMaterial({color: 0x7f8c8d}));
+            const b = new THREE.Mesh(new THREE.BoxGeometry(15, h, 20), buildingMat);
             b.position.set(35, h/2, i*45);
             scene.add(b);
             const bl = b.clone(); bl.position.x = -35; scene.add(bl);
@@ -112,46 +121,61 @@
 
         // ТРАФИК
         const traffic = [];
+        const tCarMat = new THREE.MeshPhongMaterial({color: 0x111111});
         for(let i=0; i<6; i++) {
-            const tc = new THREE.Mesh(new THREE.BoxGeometry(2, 1.2, 4), new THREE.MeshPhongMaterial({color: 0x000000}));
-            tc.position.set(Math.random()>0.5?6:-6, 0.6, -i*60);
+            const tc = new THREE.Mesh(new THREE.BoxGeometry(2, 1.2, 4), tCarMat);
+            tc.position.set(Math.random()>0.5?7:-7, 0.6, -i*60 - 20); // Смещаем от центра дороги
             scene.add(tc); traffic.push(tc);
         }
 
-        // --- МАШИНА ИГРОКА (МЕРСЕДЕС) ---
+        // --- МАШИНА ИГРОКА (MERCEDES) ---
         const car = new THREE.Group();
+        // Физический куб (невидимый)
         const carPhysicsBody = new THREE.Mesh(
             new THREE.BoxGeometry(3, 1.3, 6),
-            new THREE.MeshPhongMaterial({color: 0xff0000, transparent: true, opacity: 0}) // Невидимый куб
+            new THREE.MeshPhongMaterial({color: 0x000000, transparent: true, opacity: 0}) 
         );
         carPhysicsBody.position.y = 0.65;
         car.add(carPhysicsBody);
-        car.position.set(0, 0, -15);
+        
+        // ПОЗИЦИЯ МОДЕЛИ (Вытащили из здания на дорогу)
+        car.position.set(10, 0, -10); 
         scene.add(car);
 
-        // ЗАГРУЗКА ВАШЕЙ МОДЕЛИ
+        // ЗАГРУЗКА MERCEDES
         const loader = new GLTFLoader();
-        loader.load('mercedes-benz_cls_63_amg.glb', (gltf) => {
-            const model = gltf.scene;
-            model.scale.set(1.5, 1.5, 1.5); // Масштаб
-            model.rotation.y = Math.PI;    // Поворот на 180 (лицом вперед)
-            model.position.y = -0.6;       // Посадка на дорогу
-            car.add(model);                // Привязываем модель к контейнеру car
-            console.log("Mercedes загружен!");
-        }, undefined, (e) => console.error("Файл модели не найден!"));
+        let mercedesModel = null;
+        loader.load(
+            'mercedes-benz_cls_63_amg.glb', 
+            (gltf) => {
+                mercedesModel = gltf.scene;
+                mercedesModel.scale.set(1.5, 1.5, 1.5); // Масштаб
+                mercedesModel.rotation.y = Math.PI;    // Разворот на 180 (лицом вперед)
+                mercedesModel.position.y = -0.6;       // Посадка на дорогу
+                car.add(mercedesModel); 
+                console.log("Mercedes loaded successfully!");
+            },
+            undefined,
+            (e) => {
+                console.warn("Файл mercedes-benz_cls_63_amg.glb не найден. Использую временный куб.");
+                carPhysicsBody.material.opacity = 0.5; // Показываем куб, если модели нет
+            }
+        );
 
-        // ИГРОК
+        // --- ИГРОК И СИСТЕМЫ ---
+        let isDriving = false; let currentWeapon = null;
         const player = new THREE.Group();
-        const pBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1), new THREE.MeshPhongMaterial({color: 0x3498db}));
+        const pBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1, 4, 8), new THREE.MeshPhongMaterial({color: 0x3498db}));
         pBody.position.y = 1; player.add(pBody);
+        
         const gun = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.8), new THREE.MeshPhongMaterial({color: 0x222222}));
         gun.position.set(0.6, 1.2, -0.5); gun.visible = false; player.add(gun);
         scene.add(player);
 
         // УПРАВЛЕНИЕ
-        let mZ = 0, mX = 0, isDriving = false, currentWeapon = null;
+        let mZ = 0, mX = 0;
         const joy = nipplejs.create({zone: document.getElementById('joystick-zone'), mode: 'static', position: {left:'60px', bottom:'60px'}, color:'white'});
-        joy.on('move', (e, d) => { mZ = -d.vector.y * 0.6; mX = -d.vector.x * 0.08; });
+        joy.on('move', (e, d) => { mZ = -d.vector.y * 0.7; mX = -d.vector.x * 0.09; });
         joy.on('end', () => { mZ = 0; mX = 0; });
 
         // ФУНКЦИИ ТЕЛЕФОНА
@@ -163,7 +187,7 @@
         window.sendMessage = () => {
             const inp = document.getElementById('chat-input');
             const cont = document.getElementById('chat-content');
-            if(inp.value) { cont.innerHTML += `<div><b>Вы:</b> ${inp.value}</div>`; inp.value = ""; }
+            if(inp.value) { cont.innerHTML += `<div><b>Вы:</b> ${inp.value}</div>`; inp.value = ""; cont.scrollTop = cont.scrollHeight; }
         };
         window.takeWeapon = (type) => {
             currentWeapon = type; gun.visible = !!type;
@@ -175,44 +199,59 @@
         // СТРЕЛЬБА
         document.getElementById('fire-btn').addEventListener('touchstart', (e) => {
             e.preventDefault();
+            if(!currentWeapon) return;
             const b = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshBasicMaterial({color: 0xffff00}));
             b.position.copy(player.position); b.position.y = 1.2; scene.add(b);
             const dir = new THREE.Vector3(0,0,-1).applyQuaternion(player.quaternion);
-            function f() { b.position.add(dir.clone().multiplyScalar(2)); if(b.position.distanceTo(player.position)<80) requestAnimationFrame(f); else scene.remove(b); } f();
+            function f() { b.position.add(dir.clone().multiplyScalar(2.5)); if(b.position.distanceTo(player.position)<100) requestAnimationFrame(f); else scene.remove(b); } f();
         });
 
         window.exitVehicle = () => {
             isDriving = false; player.visible = true;
-            player.position.set(car.position.x + 5, 0, car.position.z);
+            player.position.set(car.position.x + 5, 0, car.position.z); // Высадка рядом
             document.getElementById('exit-btn').style.display = "none";
             document.getElementById('status-text').innerText = "РЕЖИМ: ПЕШЕХОД";
         };
 
+        // АНИМАЦИЯ И ЛОГИКА
         function animate() {
             requestAnimationFrame(animate);
+            
+            // Фикс размера окна
+            if (renderer.domElement.width !== window.innerWidth || renderer.domElement.height !== window.innerHeight) {
+                camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            // Логика вождения/ходьбы
             if(isDriving) {
-                car.translateZ(mZ); car.rotation.y += mX; player.position.copy(car.position);
+                car.translateZ(mZ); car.rotation.y += mX; 
+                player.position.copy(car.position); // Игрок "внутри"
             } else {
                 player.translateZ(mZ); player.rotation.y += mX;
-                if(player.position.distanceTo(car.position) < 5) {
+                
+                // Дистанция посадки (была 5, стала 10 для теста)
+                if(player.position.distanceTo(car.position) < 10) { 
                     isDriving = true; player.visible = false;
                     document.getElementById('exit-btn').style.display = "block";
                     document.getElementById('status-text').innerText = "РЕЖИМ: В МАШИНЕ";
                 }
             }
-            // Движение трафика
-            traffic.forEach(t => { t.position.z += 0.3; if(t.position.z > 200) t.position.z = -400; });
 
-            const off = new THREE.Vector3(0, 15, 25).applyQuaternion(isDriving ? car.quaternion : player.quaternion);
-            camera.position.lerp(player.position.clone().add(off), 0.1); camera.lookAt(player.position);
+            // Движение трафика
+            traffic.forEach(t => { t.position.z += 0.3; if(t.position.z > 150) t.position.z = -300; });
+
+            // КАМЕРА (Исправленная позиция: выше и дальше)
+            const cameraOffset = isDriving ? new THREE.Vector3(0, 10, 20) : new THREE.Vector3(0, 12, 22);
+            const targetPos = player.position.clone().add(cameraOffset.applyQuaternion(isDriving ? car.quaternion : player.quaternion));
+            
+            camera.position.lerp(targetPos, 0.1); 
+            camera.lookAt(player.position.clone().add(new THREE.Vector3(0, isDriving?0:1.5, 0))); // Смотрим чуть выше пола
+            
             renderer.render(scene, camera);
         }
         animate();
     </script>
 </body>
 </html>
-
-
-
 
 
