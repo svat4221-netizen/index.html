@@ -17,119 +17,47 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 // свет
-const light = new THREE.DirectionalLight(0xffffff,1);
-light.position.set(5,10,5);
-scene.add(light);
+const light = // 1. Настройка управления (Pointer Lock)
+const canvas = document.querySelector('#gameCanvas');
+canvas.onclick = () => canvas.requestPointerLock();
 
-// земля
-const groundGeo = new THREE.PlaneGeometry(200,200);
-const groundMat = new THREE.MeshBasicMaterial({color:0x444444});
-const ground = new THREE.Mesh(groundGeo,groundMat);
-ground.rotation.x = -Math.PI/2;
-scene.add(ground);
+// 2. Обработка движения (WASD)
+let keys = {};
+document.onkeydown = (e) => keys[e.code] = true;
+document.onkeyup = (e) => keys[e.code] = false;
 
-// игрок
-const playerGeo = new THREE.BoxGeometry(1,2,1);
-const playerMat = new THREE.MeshBasicMaterial({color:0x00ff00});
-const player = new THREE.Mesh(playerGeo,playerMat);
-scene.add(player);
+// 3. Логика игрока
+class Player {
+    constructor() {
+        this.position = { x: 0, y: 0, z: 0 };
+        this.rotation = { x: 0, y: 0 };
+        this.health = 100;
+    }
 
-camera.position.set(0,5,8);
-camera.lookAt(player.position);
+    update() {
+        if (keys['KeyW']) this.position.z -= 0.1;
+        if (keys['KeyS']) this.position.z += 0.1;
+        if (keys['KeyA']) this.position.x -= 0.1;
+        if (keys['KeyD']) this.position.x += 0.1;
+    }
 
-// деньги
-let money = 1000;
-
-// оружие
-let weapon = "none";
-
-// телефон
-let phoneOpen = false;
-
-// HUD
-const hud = document.createElement("div");
-hud.style.position="absolute";
-hud.style.top="10px";
-hud.style.left="10px";
-hud.style.color="white";
-hud.style.fontSize="20px";
-hud.innerHTML="💰 $1000";
-document.body.appendChild(hud);
-
-// кнопка телефона
-const phoneBtn = document.createElement("button");
-phoneBtn.innerText="📱 Phone";
-phoneBtn.style.position="absolute";
-phoneBtn.style.right="20px";
-phoneBtn.style.bottom="150px";
-document.body.appendChild(phoneBtn);
-
-// кнопка оружия
-const gunBtn = document.createElement("button");
-gunBtn.innerText="🔫 Weapon";
-gunBtn.style.position="absolute";
-gunBtn.style.right="20px";
-gunBtn.style.bottom="100px";
-document.body.appendChild(gunBtn);
-
-// кнопка инвентаря
-const invBtn = document.createElement("button");
-invBtn.innerText="🎒 Inventory";
-invBtn.style.position="absolute";
-invBtn.style.right="20px";
-invBtn.style.bottom="50px";
-document.body.appendChild(invBtn);
-
-// телефон
-phoneBtn.onclick = () => {
-
-phoneOpen = !phoneOpen;
-
-if(phoneOpen){
-
-alert("📱 Phone\n\n1. Contacts\n2. Taxi\n3. Police");
-
+    shoot() {
+        console.log("Выстрел! Проверка попадания через Raycasting...");
+        // В реальности здесь идет расчет пересечения луча с моделями врагов
+    }
 }
 
-};
+// 4. Игровой цикл
+const player = new Player();
+function gameLoop() {
+    player.update();
+    // Тут должен быть рендеринг 3D сцены (Three.js или WebGL)
+    requestAnimationFrame(gameLoop);
+}
 
-// оружие
-gunBtn.onclick = () => {
-
-weapon = "pistol";
-
-alert("🔫 You selected pistol");
-
-};
-
-// инвентарь
-invBtn.onclick = () => {
-
-alert("🎒 Inventory\nMoney: $" + money + "\nWeapon: " + weapon);
-
-};
-
-// движение
-document.addEventListener("keydown",(e)=>{
-
-if(e.key==="w") player.position.z -=0.3;
-if(e.key==="s") player.position.z +=0.3;
-if(e.key==="a") player.position.x -=0.3;
-if(e.key==="d") player.position.x +=0.3;
-
+// Слушаем нажатие мыши (стрельба)
+document.addEventListener('mousedown', () => {
+    if (document.pointerLockElement === canvas) player.shoot();
 });
 
-// цикл игры
-function animate(){
-
-requestAnimationFrame(animate);
-
-camera.position.x = player.position.x;
-camera.position.z = player.position.z + 8;
-camera.lookAt(player.position);
-
-renderer.render(scene,camera);
-
-}
-
-animate();
+gameLoop();
