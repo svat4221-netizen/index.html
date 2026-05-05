@@ -3,92 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPRK: Rise of Juche v7.1</title>
+    <title>DPRK: Soldier of Juche v7.2</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #1a1a1a; touch-action: none; font-family: sans-serif; width: 100vw; height: 100vh; }
+        body { margin: 0; overflow: hidden; background: #1a1a1a; touch-action: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; width: 100vw; height: 100vh; }
         #hud { position: absolute; top: 15px; left: 15px; color: #fff; z-index: 10; text-shadow: 2px 2px 4px #000; pointer-events: none; }
         
-        /* Кнопки управления */
-        #phone-btn { position: absolute; bottom: 20px; right: 20px; width: 65px; height: 65px; background: #c0392b; border-radius: 50%; border: 3px solid #fff; z-index: 20; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        #fire-btn { position: absolute; bottom: 110px; right: 20px; width: 75px; height: 75px; background: rgba(231, 76, 60, 0.8); border-radius: 50%; border: 3px solid #fff; z-index: 20; display: none; align-items: center; justify-content: center; font-size: 30px; color: white; }
-        #exit-btn { position: absolute; bottom: 110px; left: 20px; padding: 15px; background: rgba(0,0,0,0.8); color: white; border: 1px solid #fff; border-radius: 10px; display: none; z-index: 10; font-weight: bold; }
+        /* Основные кнопки */
+        #phone-btn { position: absolute; bottom: 20px; right: 20px; width: 65px; height: 65px; background: #c0392b; border-radius: 50%; border: 3px solid #fff; z-index: 100; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); }
+        #fire-btn { position: absolute; bottom: 110px; right: 20px; width: 75px; height: 75px; background: rgba(231, 76, 60, 0.8); border-radius: 50%; border: 3px solid #fff; z-index: 90; display: none; align-items: center; justify-content: center; font-size: 30px; color: white; }
+        #exit-btn { position: absolute; bottom: 110px; left: 20px; padding: 15px; background: rgba(0,0,0,0.8); color: white; border: 1px solid #fff; border-radius: 10px; display: none; z-index: 90; font-weight: bold; }
 
-        /* ТЕЛЕФОН */
-        #phone { position: absolute; bottom: -100%; left: 50%; transform: translateX(-50%); width: 95%; height: 85%; background: #0a0a0a; border-radius: 35px 35px 0 0; transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); z-index: 30; padding: 15px; border: 2px solid #333; box-sizing: border-box; }
+        /* ИНТЕРФЕЙС ТЕЛЕФОНА */
+        #phone { position: absolute; bottom: -100%; left: 50%; transform: translateX(-50%); width: 95%; height: 85%; background: #0a0a0a; border-radius: 35px 35px 0 0; transition: 0.4s cubic-bezier(0.1, 0.7, 0.3, 1); z-index: 200; padding: 15px; border: 2px solid #333; box-sizing: border-box; }
         #phone.active { bottom: 0; }
-        #phone-display { background: #111; height: 100%; border-radius: 20px; padding: 15px; overflow-y: auto; color: #fff; display: flex; flex-direction: column; }
+        #phone-display { background: #111; height: 100%; border-radius: 20px; padding: 15px; overflow: hidden; color: #fff; display: flex; flex-direction: column; }
 
+        /* Приложения */
         .app-page { display: none; flex-direction: column; height: 100%; }
         .app-page.active { display: flex; }
-        .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
-        .app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; }
-        .app-item:active { transform: scale(0.9); }
+        .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
+        .app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; text-align: center; font-size: 11px; }
         .icon-sq { width: 55px; height: 55px; background: #222; border-radius: 14px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; font-size: 26px; border: 1px solid #444; }
         
-        .list-item { background: #1c1c1c; padding: 12px; margin-top: 10px; border-radius: 12px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-        .take-btn { background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; }
-        .back-btn { background: #333; border: none; color: #fff; padding: 8px; border-radius: 8px; margin-bottom: 10px; width: 80px; font-size: 12px; }
+        .list-item { background: #1c1c1c; padding: 12px; margin-top: 8px; border-radius: 12px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+        .back-btn { background: #333; border: none; color: #fff; padding: 8px; border-radius: 8px; margin-bottom: 10px; width: 80px; font-size: 12px; cursor: pointer; }
 
-        #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; z-index: 20; }
+        /* МЕССЕНДЖЕР (РАБОЧИЙ) */
+        #chat-content { flex-grow: 1; background: #000; border-radius: 10px; padding: 10px; overflow-y: auto; font-size: 12px; margin-bottom: 10px; border: 1px solid #222; }
+        #chat-input-row { display: flex; gap: 5px; height: 40px; }
+        #chat-input { flex-grow: 1; background: #222; border: 1px solid #444; color: #fff; padding: 0 10px; border-radius: 8px; outline: none; }
+        #chat-send { background: #c0392b; border: none; color: #fff; width: 50px; border-radius: 8px; font-weight: bold; }
+
+        #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; z-index: 50; }
     </style>
 </head>
 <body>
 
     <div id="hud">
-        <div style="font-size: 10px; letter-spacing: 1px;">KORYOLINK | ПХЕНЬЯН</div>
-        <div id="status-text" style="font-size: 18px;"><b>РЕЖИМ: ПЕШЕХОД</b></div>
-        <div id="weapon-name" style="color: #e74c3c; font-weight: bold; margin-top: 5px;"></div>
+        <div style="font-size: 10px; letter-spacing: 1px; opacity: 0.7;">DPRK QUANTUM LINK</div>
+        <div id="status-text" style="font-size: 18px;"><b>ПЕШЕХОД</b></div>
+        <div id="weapon-name" style="color: #e74c3c; font-weight: bold;"></div>
     </div>
 
     <div id="joystick-zone"></div>
     <div id="fire-btn">💥</div>
-    <div id="exit-btn" onclick="exitVehicle()">ВЫЙТИ ИЗ МАШИНЫ</div>
+    <div id="exit-btn" onclick="exitVehicle()">ВЫЙТИ</div>
     <div id="phone-btn" onclick="togglePhone()">📱</div>
 
     <div id="phone">
         <div id="phone-display">
             <div id="p-main" class="app-page active">
-                <center><h3 style="color:#c0392b; margin-top: 0;">ПХЕНЬЯН OS</h3></center>
+                <center><h4 style="color:#c0392b; margin: 0 0 15px 0;">KORYO-TALK v7.2</h4></center>
                 <div class="app-grid">
                     <div class="app-item" onclick="openApp('ars')"><div class="icon-sq">🔫</div>Арсенал</div>
                     <div class="app-item" onclick="openApp('msg')"><div class="icon-sq">💬</div>Чат</div>
                     <div class="app-item" onclick="openApp('calls')"><div class="icon-sq">📞</div>Звонки</div>
                     <div class="app-item" onclick="openApp('cont')"><div class="icon-sq">👤</div>Контакты</div>
                     <div class="app-item" onclick="openApp('car')"><div class="icon-sq">🚗</div>Машина</div>
-                    <div class="app-item" onclick="togglePhone()"><div class="icon-sq" style="background:#c0392b;">🚪</div>ВЫХОД</div>
+                    <div class="app-item" onclick="togglePhone()"><div class="icon-sq" style="background:#c0392b; border-color:#fff;">🚪</div>ВЫХОД</div>
+                </div>
+            </div>
+
+            <div id="p-msg" class="app-page">
+                <button class="back-btn" onclick="openApp('main')">← Назад</button>
+                <div id="chat-content">
+                    <div style="color: #555;">[Чат защищен шифрованием Чучхе]</div>
+                </div>
+                <div id="chat-input-row">
+                    <input type="text" id="chat-input" placeholder="Сообщение...">
+                    <button id="chat-send" onclick="sendMessage()">▶</button>
                 </div>
             </div>
 
             <div id="p-ars" class="app-page">
                 <button class="back-btn" onclick="openApp('main')">← Назад</button>
-                <div class="list-item"><span>M4A1 Desert</span><button class="take-btn" onclick="takeWeapon('M4A1')">ВЗЯТЬ</button></div>
-                <div class="list-item"><span>Desert Eagle</span><button class="take-btn" onclick="takeWeapon('Deagle')">ВЗЯТЬ</button></div>
-                <div class="list-item"><span>Снять всё</span><button class="take-btn" style="background:#555;" onclick="takeWeapon(null)">УБРАТЬ</button></div>
+                <div class="list-item"><span>M4A1 Desert</span><button onclick="takeWeapon('M4A1')">ВЗЯТЬ</button></div>
+                <div class="list-item"><span>Desert Eagle</span><button onclick="takeWeapon('Deagle')">ВЗЯТЬ</button></div>
+                <div class="list-item"><span>Снять всё</span><button onclick="takeWeapon(null)">УБРАТЬ</button></div>
             </div>
 
             <div id="p-calls" class="app-page">
                 <button class="back-btn" onclick="openApp('main')">← Назад</button>
-                <center style="margin-top:50px; color:#555;">
-                    <div class="icon-sq" style="width:80px; height:80px; font-size:40px; margin-bottom:20px;">📞</div>
-                    <p>Абонент временно недоступен</p>
-                </center>
+                <div class="list-item">📞 Майор Пак (Вызов...)</div>
             </div>
-
             <div id="p-cont" class="app-page">
                 <button class="back-btn" onclick="openApp('main')">← Назад</button>
-                <div class="list-item">👤 Майор Пак (МВД)</div>
-                <div class="list-item">👤 Штаб Партии</div>
-                <div class="list-item">👤 Сосед (подозрительный)</div>
-            </div>
-            
-            <div id="p-msg" class="app-page">
-                <button class="back-btn" onclick="openApp('main')">← Назад</button>
-                <div style="flex-grow:1; background:#000; border-radius:10px; padding:15px; font-family:monospace; font-size:11px; border:1px solid #222;">
-                    > Соединение...<br>
-                    > Доступ в Кванмён разрешен.<br>
-                    > Сообщений нет.
-                </div>
+                <div class="list-item">👤 Товарищ Ким</div>
+                <div class="list-item">👤 Служба Безопасности</div>
             </div>
         </div>
     </div>
@@ -97,124 +99,115 @@
     <script type="module">
         import * as THREE from 'three';
 
+        // ДВИЖОК
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x2c3e50);
+        scene.background = new THREE.Color(0x1e272e);
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
         const sun = new THREE.DirectionalLight(0xffffff, 1);
         sun.position.set(50, 100, 50);
         scene.add(sun);
 
-        // Город
         const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.MeshPhongMaterial({color: 0x1a1a1a}));
         ground.rotation.x = -Math.PI/2;
         scene.add(ground);
 
-        for(let i = -15; i < 15; i++) {
-            const h = 20 + Math.random()*50;
-            const b = new THREE.Mesh(new THREE.BoxGeometry(15, h, 20), new THREE.MeshPhongMaterial({color: 0x7f8c8d}));
-            b.position.set(35, h/2, i*45);
-            scene.add(b);
-            const bl = b.clone(); bl.position.x = -35; scene.add(bl);
-        }
-
-        // Игрок и Машина
-        let isDriving = false;
-        let currentWeapon = null;
-
+        // Игрок и Оружие
+        let isDriving = false; let currentWeapon = null;
         const player = new THREE.Group();
         const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1, 4, 8), new THREE.MeshPhongMaterial({color: 0x3498db}));
-        body.position.y = 1;
-        player.add(body);
-
-        // Визуальное оружие в руках
-        const gunModel = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.4, 1.2), new THREE.MeshPhongMaterial({color: 0x222222}));
-        gunModel.position.set(0.6, 1.2, -0.6);
-        gunModel.visible = false;
-        player.add(gunModel);
+        body.position.y = 1; player.add(body);
+        
+        const gun = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 1), new THREE.MeshPhongMaterial({color: 0x222222}));
+        gun.position.set(0.6, 1.2, -0.5); gun.visible = false;
+        player.add(gun);
         scene.add(player);
 
         const car = new THREE.Group();
-        const cBody = new THREE.Mesh(new THREE.BoxGeometry(3, 1.3, 6.5), new THREE.MeshPhongMaterial({color: 0x050505}));
-        cBody.position.set(0, 0.65, -12);
-        car.add(cBody);
+        const cBody = new THREE.Mesh(new THREE.BoxGeometry(3, 1.3, 6), new THREE.MeshPhongMaterial({color: 0x050505}));
+        cBody.position.set(0, 0.65, -15); car.add(cBody);
         scene.add(car);
 
-        // Управление (Джойстик)
+        // Джойстик
         let mZ = 0, mX = 0;
         const joy = nipplejs.create({zone: document.getElementById('joystick-zone'), mode: 'static', position: {left:'60px', bottom:'60px'}, color:'white'});
-        joy.on('move', (e, d) => { mZ = -d.vector.y * 0.65; mX = -d.vector.x * 0.09; });
+        joy.on('move', (e, d) => { mZ = -d.vector.y * 0.6; mX = -d.vector.x * 0.08; });
         joy.on('end', () => { mZ = 0; mX = 0; });
 
-        // Система телефона
-        window.togglePhone = () => document.getElementById('phone').classList.toggle('active');
+        // ФУНКЦИИ
+        window.togglePhone = () => {
+            const p = document.getElementById('phone');
+            p.classList.toggle('active');
+        };
+
         window.openApp = (id) => {
-            document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.app-page').forEach(page => page.classList.remove('active'));
             document.getElementById('p-' + id).classList.add('active');
         };
 
-        // Арсенал
         window.takeWeapon = (type) => {
             currentWeapon = type;
-            gunModel.visible = !!type;
-            document.getElementById('weapon-name').innerText = type ? "ТЕКУЩЕЕ: " + type : "";
+            gun.visible = !!type;
+            document.getElementById('weapon-name').innerText = type ? "ОРУЖИЕ: " + type : "";
             document.getElementById('fire-btn').style.display = type ? "flex" : "none";
             togglePhone();
         };
 
-        // Стрельба (Логика пуль)
-        document.getElementById('fire-btn').addEventListener('touchstart', (e) => {
-            e.preventDefault();
+        window.sendMessage = () => {
+            const input = document.getElementById('chat-input');
+            const content = document.getElementById('chat-content');
+            if (input.value.trim() !== "") {
+                content.innerHTML += `<div style="margin-bottom:5px;"><b>Вы:</b> ${input.value}</div>`;
+                input.value = "";
+                content.scrollTop = content.scrollHeight;
+            }
+        };
+
+        // Стрельба
+        document.getElementById('fire-btn').addEventListener('touchstart', () => {
             if(!currentWeapon) return;
-            const bullet = new THREE.Mesh(new THREE.SphereGeometry(0.12), new THREE.MeshBasicMaterial({color: 0xffcc00}));
-            bullet.position.copy(player.position);
-            bullet.position.y = 1.2;
+            const bullet = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshBasicMaterial({color: 0xffff00}));
+            bullet.position.copy(player.position); bullet.position.y = 1.2;
             scene.add(bullet);
-            
             const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(player.quaternion);
             function fly() {
-                bullet.position.add(dir.clone().multiplyScalar(2.2));
+                bullet.position.add(dir.clone().multiplyScalar(2));
                 if(bullet.position.distanceTo(player.position) < 80) requestAnimationFrame(fly);
                 else scene.remove(bullet);
-            }
-            fly();
+            } fly();
         });
 
         window.exitVehicle = () => {
             isDriving = false; player.visible = true;
             player.position.set(car.position.x + 5, 0, car.position.z);
             document.getElementById('exit-btn').style.display = "none";
-            document.getElementById('status-text').innerHTML = "<b>РЕЖИМ: ПЕШЕХОД</b>";
+            document.getElementById('status-text').innerText = "ПЕШЕХОД";
         };
 
         function animate() {
             requestAnimationFrame(animate);
-
-            // Фикс ресайза экрана
             if (renderer.domElement.width !== window.innerWidth || renderer.domElement.height !== window.innerHeight) {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
             }
-
             if(isDriving) {
                 car.translateZ(mZ); car.rotation.y += mX;
                 player.position.copy(car.position);
             } else {
                 player.translateZ(mZ); player.rotation.y += mX;
                 const dist = player.position.distanceTo(car.children[0].getWorldPosition(new THREE.Vector3()));
-                if(dist < 5.5) {
+                if(dist < 5 && !isDriving) {
                     isDriving = true; player.visible = false;
                     document.getElementById('exit-btn').style.display = "block";
-                    document.getElementById('status-text').innerHTML = "<b>РЕЖИМ: В МАШИНЕ</b>";
+                    document.getElementById('status-text').innerText = "В МАШИНЕ";
                 }
             }
-
-            const camOff = new THREE.Vector3(0, 16, 26).applyQuaternion(isDriving ? car.quaternion : player.quaternion);
+            const camOff = new THREE.Vector3(0, 15, 25).applyQuaternion(isDriving ? car.quaternion : player.quaternion);
             camera.position.lerp(player.position.clone().add(camOff), 0.1);
             camera.lookAt(player.position);
             renderer.render(scene, camera);
@@ -223,6 +216,7 @@
     </script>
 </body>
 </html>
+
 
 
 
