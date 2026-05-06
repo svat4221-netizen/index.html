@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPRK: Mercedes Fix v8.9</title>
+    <title>DPRK: Mercedes Pro v9.2</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background: #1a1a1a; touch-action: none; font-family: sans-serif; }
         #hud { position: absolute; top: 15px; left: 15px; color: #fff; z-index: 10; text-shadow: 2px 2px 4px #000; pointer-events: none; }
-        
+        #weapon-name { color: #e74c3c; font-weight: bold; margin-top: 5px; }
+
         /* Кнопки */
         #phone-btn { position: absolute; bottom: 20px; right: 20px; width: 65px; height: 65px; background: #c0392b; border-radius: 50%; border: 3px solid #fff; z-index: 100; display: flex; align-items: center; justify-content: center; font-size: 28px; }
         #fire-btn { position: absolute; bottom: 110px; right: 20px; width: 75px; height: 75px; background: rgba(231, 76, 60, 0.8); border-radius: 50%; border: 3px solid #fff; z-index: 90; display: none; align-items: center; justify-content: center; font-size: 30px; }
@@ -18,7 +19,6 @@
         #phone { position: absolute; bottom: -100%; left: 50%; transform: translateX(-50%); width: 95%; height: 85%; background: #0a0a0a; border-radius: 35px 35px 0 0; transition: 0.4s; z-index: 200; padding: 15px; border: 2px solid #333; box-sizing: border-box; }
         #phone.active { bottom: 0; }
         #phone-display { background: #111; height: 100%; border-radius: 20px; padding: 15px; color: #fff; display: flex; flex-direction: column; overflow: hidden; }
-        
         .app-page { display: none; flex-direction: column; height: 100%; }
         .app-page.active { display: flex; }
         .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
@@ -36,18 +36,18 @@
 
     <div id="hud">
         <div id="status-text"><b>РЕЖИМ: ПЕШЕХОД</b></div>
-        <div id="weapon-name" style="color: #e74c3c; font-weight: bold;"></div>
+        <div id="weapon-name"></div>
     </div>
 
     <div id="joystick-zone"></div>
     <div id="fire-btn">💥</div>
-    <div id="exit-btn" onclick="exitVehicle()">ВЫЙТИ</div>
+    <div id="exit-btn" onclick="exitVehicle()">ВЫЙТИ ИЗ МАШИНЫ</div>
     <div id="phone-btn" onclick="togglePhone()">📱</div>
 
     <div id="phone">
         <div id="phone-display">
             <div id="p-main" class="app-page active">
-                <center><h4 style="color:#c0392b; margin:0 0 10px 0;">KORYO v8.9</h4></center>
+                <center><h4 style="color:#c0392b; margin:0 0 10px 0;">KORYO v9.2</h4></center>
                 <div class="app-grid">
                     <div class="app-item" onclick="openApp('ars')"><div class="icon-sq">🔫</div>Арсенал</div>
                     <div class="app-item" onclick="openApp('msg')"><div class="icon-sq">💬</div>Чат</div>
@@ -57,18 +57,19 @@
                 </div>
             </div>
             <div id="p-msg" class="app-page">
-                <button onclick="openApp('main')" style="width: 50px; background: #333; color: white; border: none; border-radius: 5px;">←</button>
+                <button onclick="openApp('main')" style="width: 40px;">←</button>
                 <div id="chat-content"></div>
                 <div id="chat-input-row">
-                    <input type="text" id="chat-input" placeholder="...">
-                    <button onclick="sendMessage()" style="background:#c0392b; color:#fff; border:none; padding:5px 10px; border-radius:5px;">▶</button>
+                    <input type="text" id="chat-input" placeholder="Писать тут...">
+                    <button onclick="sendMessage()" style="background:#c0392b; color:#fff;">▶</button>
                 </div>
             </div>
             <div id="p-ars" class="app-page">
-                <button onclick="openApp('main')" style="width: 50px; background: #333; color: white; border: none; border-radius: 5px;">←</button>
-                <div style="margin-top:10px;">
-                    <button onclick="takeWeapon('M4A1')" style="width:100%; padding: 10px; margin-bottom:5px; background: #2c3e50; color: white; border: 1px solid #444; border-radius: 5px;">M4A1 Desert</button>
-                    <button onclick="takeWeapon('Deagle')" style="width:100%; padding: 10px; margin-bottom:5px; background: #2c3e50; color: white; border: 1px solid #444; border-radius: 5px;">Desert Eagle</button>
+                <button onclick="openApp('main')" style="width: 40px;">←</button>
+                <div style="margin-top:15px;">
+                    <button onclick="takeWeapon('M4A1')" style="width:100%; padding:10px; margin-bottom:10px;">Взять M4A1 Desert</button>
+                    <button onclick="takeWeapon('Deagle')" style="width:100%; padding:10px; margin-bottom:10px;">Взять Desert Eagle</button>
+                    <button onclick="takeWeapon(null)" style="width:100%; padding:10px; background:#444; color:white;">Убрать оружие</button>
                 </div>
             </div>
         </div>
@@ -87,98 +88,84 @@
         import * as THREE from 'three';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-        // --- ДВИЖОК И МИР ---
+        // --- СЦЕНА И РЕНДЕРЕР ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x2c3e50);
+        scene.background = new THREE.Color(0x1a1a1a);
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        
-        // Начальная позиция камеры (высоко и сзади)
-        camera.position.set(0, 15, 30);
-        
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.outputColorSpace = THREE.SRGBColorSpace; // Для правильных текстур
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-        const sun = new THREE.DirectionalLight(0xffffff, 1);
-        sun.position.set(50, 100, 50);
+        // --- УСИЛЕННЫЙ СВЕТ ДЛЯ ТЕКСТУР ---
+        scene.add(new THREE.AmbientLight(0xffffff, 2.0)); 
+        const sun = new THREE.DirectionalLight(0xffffff, 2.0);
+        sun.position.set(10, 50, 10);
         scene.add(sun);
+        const hem = new THREE.HemisphereLight(0xffffbb, 0x080820, 1.5);
+        scene.add(hem);
 
-        const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.MeshPhongMaterial({color: 0x1a1a1a}));
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.MeshPhongMaterial({color: 0x222222}));
         ground.rotation.x = -Math.PI / 2;
         scene.add(ground);
 
         // ГОРОД
-        const buildingMat = new THREE.MeshPhongMaterial({color: 0x7f8c8d});
         for(let i = -10; i < 10; i++) {
-            if(i === 0) continue; // Оставляем пустой проезд в центре
-            const h = 20 + Math.random()*20;
-            const b = new THREE.Mesh(new THREE.BoxGeometry(15, h, 20), buildingMat);
-            b.position.set(35, h/2, i*45);
+            if(i === 0) continue;
+            const h = 25;
+            const b = new THREE.Mesh(new THREE.BoxGeometry(15, h, 20), new THREE.MeshPhongMaterial({color: 0x444444}));
+            b.position.set(45, h/2, i*55);
             scene.add(b);
-            const bl = b.clone(); bl.position.x = -35; scene.add(bl);
+            const bl = b.clone(); bl.position.x = -45; scene.add(bl);
         }
 
-        // ТРАФИК
-        const traffic = [];
-        const tCarMat = new THREE.MeshPhongMaterial({color: 0x111111});
-        for(let i=0; i<6; i++) {
-            const tc = new THREE.Mesh(new THREE.BoxGeometry(2, 1.2, 4), tCarMat);
-            tc.position.set(Math.random()>0.5?7:-7, 0.6, -i*60 - 20); // Смещаем от центра дороги
-            scene.add(tc); traffic.push(tc);
-        }
-
-        // --- МАШИНА ИГРОКА (MERCEDES) ---
+        // --- МАШИНА (MERCEDES) ---
         const car = new THREE.Group();
-        // Физический куб (невидимый)
-        const carPhysicsBody = new THREE.Mesh(
-            new THREE.BoxGeometry(3, 1.3, 6),
-            new THREE.MeshPhongMaterial({color: 0x000000, transparent: true, opacity: 0}) 
+        const carMarker = new THREE.Mesh(
+            new THREE.BoxGeometry(6, 2.5, 10),
+            new THREE.MeshPhongMaterial({color: 0xff0000, transparent: true, opacity: 0.3})
         );
-        carPhysicsBody.position.y = 0.65;
-        car.add(carPhysicsBody);
-        
-        // ПОЗИЦИЯ МОДЕЛИ (Вытащили из здания на дорогу)
-        car.position.set(10, 0, -10); 
+        carMarker.position.y = 1.25;
+        car.add(carMarker);
+        car.position.set(15, 0, -20);
         scene.add(car);
 
-        // ЗАГРУЗКА MERCEDES
         const loader = new GLTFLoader();
-        let mercedesModel = null;
-        loader.load(
-            'mercedes-benz_cls_63_amg.glb', 
-            (gltf) => {
-                mercedesModel = gltf.scene;
-                mercedesModel.scale.set(1.5, 1.5, 1.5); // Масштаб
-                mercedesModel.rotation.y = Math.PI;    // Разворот на 180 (лицом вперед)
-                mercedesModel.position.y = -0.6;       // Посадка на дорогу
-                car.add(mercedesModel); 
-                console.log("Mercedes loaded successfully!");
-            },
-            undefined,
-            (e) => {
-                console.warn("Файл mercedes-benz_cls_63_amg.glb не найден. Использую временный куб.");
-                carPhysicsBody.material.opacity = 0.5; // Показываем куб, если модели нет
-            }
-        );
+        loader.load('mercedes-benz_cls_63_amg.glb', (gltf) => {
+            const model = gltf.scene;
+            
+            // Настройка материалов для текстур
+            model.traverse((n) => {
+                if (n.isMesh) {
+                    n.material.side = THREE.DoubleSide;
+                    if(n.material.map) n.material.map.anisotropy = 16;
+                }
+            });
 
-        // --- ИГРОК И СИСТЕМЫ ---
-        let isDriving = false; let currentWeapon = null;
+            model.scale.set(1.9, 1.9, 1.9);
+            model.rotation.y = Math.PI; 
+            model.position.y = -1;
+            car.add(model);
+            console.log("Mercedes Pro Loaded");
+        });
+
+        // --- ИГРОК ---
         const player = new THREE.Group();
-        const pBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1, 4, 8), new THREE.MeshPhongMaterial({color: 0x3498db}));
-        pBody.position.y = 1; player.add(pBody);
-        
-        const gun = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.8), new THREE.MeshPhongMaterial({color: 0x222222}));
-        gun.position.set(0.6, 1.2, -0.5); gun.visible = false; player.add(gun);
+        const pBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1), new THREE.MeshPhongMaterial({color: 0x3498db}));
+        pBody.position.y = 1;
+        player.add(pBody);
+        const gun = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.8), new THREE.MeshPhongMaterial({color: 0x000000}));
+        gun.position.set(0.6, 1.2, -0.5); gun.visible = false; 
+        player.add(gun);
         scene.add(player);
 
-        // УПРАВЛЕНИЕ
-        let mZ = 0, mX = 0;
-        const joy = nipplejs.create({zone: document.getElementById('joystick-zone'), mode: 'static', position: {left:'60px', bottom:'60px'}, color:'white'});
-        joy.on('move', (e, d) => { mZ = -d.vector.y * 0.7; mX = -d.vector.x * 0.09; });
+        // --- УПРАВЛЕНИЕ ---
+        let mZ = 0, mX = 0, isDriving = false, currentWeapon = null;
+        const joy = nipplejs.create({zone: document.getElementById('joystick-zone'), mode: 'static', position: {left:'70px', bottom:'70px'}, color:'white'});
+        joy.on('move', (e, d) => { mZ = -d.vector.y * 0.75; mX = -d.vector.x * 0.08; });
         joy.on('end', () => { mZ = 0; mX = 0; });
 
-        // ФУНКЦИИ ТЕЛЕФОНА
+        // ФУНКЦИИ
         window.togglePhone = () => document.getElementById('phone').classList.toggle('active');
         window.openApp = (id) => {
             document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active'));
@@ -196,62 +183,61 @@
             togglePhone();
         };
 
-        // СТРЕЛЬБА
+        // ОГОНЬ
         document.getElementById('fire-btn').addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if(!currentWeapon) return;
-            const b = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshBasicMaterial({color: 0xffff00}));
+            const b = new THREE.Mesh(new THREE.SphereGeometry(0.12), new THREE.MeshBasicMaterial({color: 0xffaa00}));
             b.position.copy(player.position); b.position.y = 1.2; scene.add(b);
             const dir = new THREE.Vector3(0,0,-1).applyQuaternion(player.quaternion);
-            function f() { b.position.add(dir.clone().multiplyScalar(2.5)); if(b.position.distanceTo(player.position)<100) requestAnimationFrame(f); else scene.remove(b); } f();
+            function f() { b.position.add(dir.clone().multiplyScalar(3)); if(b.position.distanceTo(player.position)<120) requestAnimationFrame(f); else scene.remove(b); } f();
         });
 
         window.exitVehicle = () => {
             isDriving = false; player.visible = true;
-            player.position.set(car.position.x + 5, 0, car.position.z); // Высадка рядом
+            player.position.set(car.position.x + 6, 0, car.position.z);
+            carMarker.visible = true;
             document.getElementById('exit-btn').style.display = "none";
-            document.getElementById('status-text').innerText = "РЕЖИМ: ПЕШЕХОД";
+            document.getElementById('status-text').innerHTML = "<b>РЕЖИМ: ПЕШЕХОД</b>";
         };
 
-        // АНИМАЦИЯ И ЛОГИКА
+        // АНИМАЦИЯ
         function animate() {
             requestAnimationFrame(animate);
-            
-            // Фикс размера окна
-            if (renderer.domElement.width !== window.innerWidth || renderer.domElement.height !== window.innerHeight) {
-                camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
-            }
 
-            // Логика вождения/ходьбы
             if(isDriving) {
-                car.translateZ(mZ); car.rotation.y += mX; 
-                player.position.copy(car.position); // Игрок "внутри"
+                car.translateZ(mZ);
+                car.rotation.y += mX;
+                player.position.copy(car.position);
+                // КАМЕРА ЦЕНТРАЛЬНАЯ (X=0)
+                const camPos = car.position.clone().add(new THREE.Vector3(0, 8, 22).applyQuaternion(car.quaternion));
+                camera.position.lerp(camPos, 0.1);
+                camera.lookAt(car.position);
             } else {
-                player.translateZ(mZ); player.rotation.y += mX;
+                player.translateZ(mZ);
+                player.rotation.y += mX;
                 
-                // Дистанция посадки (была 5, стала 10 для теста)
-                if(player.position.distanceTo(car.position) < 10) { 
-                    isDriving = true; player.visible = false;
+                if(player.position.distanceTo(car.position) < 12) {
+                    isDriving = true; player.visible = false; carMarker.visible = false;
                     document.getElementById('exit-btn').style.display = "block";
-                    document.getElementById('status-text').innerText = "РЕЖИМ: В МАШИНЕ";
+                    document.getElementById('status-text').innerHTML = "<b>РЕЖИМ: ЗА РУЛЕМ MERCEDES</b>";
                 }
+                const camPos = player.position.clone().add(new THREE.Vector3(0, 12, 25).applyQuaternion(player.quaternion));
+                camera.position.lerp(camPos, 0.1);
+                camera.lookAt(player.position);
             }
 
-            // Движение трафика
-            traffic.forEach(t => { t.position.z += 0.3; if(t.position.z > 150) t.position.z = -300; });
-
-            // КАМЕРА (Исправленная позиция: выше и дальше)
-            const cameraOffset = isDriving ? new THREE.Vector3(0, 10, 20) : new THREE.Vector3(0, 12, 22);
-            const targetPos = player.position.clone().add(cameraOffset.applyQuaternion(isDriving ? car.quaternion : player.quaternion));
-            
-            camera.position.lerp(targetPos, 0.1); 
-            camera.lookAt(player.position.clone().add(new THREE.Vector3(0, isDriving?0:1.5, 0))); // Смотрим чуть выше пола
-            
             renderer.render(scene, camera);
         }
         animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
+ 
 
 
