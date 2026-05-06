@@ -1,107 +1,91 @@
--- ========================================================
--- PROJECT: STANDOFF X GMOD (CORE SYSTEM V2)
--- ========================================================
+--[[ 
+    PROJECT: STANDOFF x GMOD - SUPREME CORE SYSTEM 
+    Description: Основной скрипт управления миром, рангами и спавном
+]]
 
-local ProjectSystem = {
-    -- ТАБЛИЦА ЗВАНИЙ (ОТ НОВИЧКА ДО ЛЕГЕНДЫ)
-    -- Каждое звание имеет свой ID и визуальный цвет
-    PlayerRanks = {
-        [1] = {title = "Rookie", color = "#C0C0C0", icon = "🥉"}, -- Самое низкое
-        [2] = {title = "Warrior", color = "#4CAF50", icon = "⚔️"},
-        [3] = {title = "Veteran", color = "#2196F3", icon = "🎖️"},
-        [4] = {title = "Master", color = "#9C27B0", icon = "🔮"},
-        [5] = {title = "Elite", color = "#FF5722", icon = "🔥"},
-        [6] = {title = "Legend", color = "#FFD700", icon = "🏆"}  -- Самое высокое
+local GModStandoff = {
+    -- 1. СИСТЕМА РАНГОВ (ОТ НОВИЧКА ДО ЛЕГЕНДЫ)
+    Ranks = {
+        [1] = {name = "Silver I",   icon = "🥉", color = "#C0C0C0"},
+        [2] = {name = "Gold Nova",  icon = "🥈", color = "#FFD700"},
+        [3] = {name = "Master",     icon = "🥇", color = "#1E90FF"},
+        [4] = {name = "Elite",      icon = "🔥", color = "#FF4500"},
+        [5] = {name = "Legend",     icon = "🏆", color = "#FF0000"} -- Высшее звание
     },
 
-    -- СИСТЕМА АДМИНИСТРАЦИИ (ПРЕФИКСЫ-КОРОНЫ)
-    StaffGroups = {
-        ["moderator"] = {label = "Модератор", crown = "⚪", desc = "Серебряная корона"},
-        ["admin"]     = {label = "Администратор", crown = "🟡", desc = "Золотая корона"},
-        ["curator"]   = {label = "Куратор", crown = "💎", desc = "Платиновая корона"},
-        ["owner"]     = {label = "Владелец", crown = "👑", desc = "Корона Создателя"}
-    },
-
-    -- МАГАЗИН И ВАЛЮТА
-    Currency = {
-        Gold = "G", -- Донат валюта
-        Silver = "S" -- Игровая валюта
+    -- 2. СИСТЕМА АДМИН-ПРЕФИКСОВ (СТИКЕРЫ-КОРОНЫ)
+    Staff = {
+        ["moderator"] = {prefix = "⚪", label = "MODER",  power = 1},
+        ["admin"]     = {prefix = "🟡", label = "ADMIN",  power = 2},
+        ["curator"]   = {prefix = "💎", label = "CURATOR",power = 3}, -- Навороченная
+        ["owner"]     = {prefix = "👑", label = "OWNER",  power = 100} -- Самая крутая
     }
 }
 
--- 1. ЛОГИКА ОТОБРАЖЕНИЯ НИКНЕЙМОВ И ПРЕФИКСОВ
--- Эта функция отвечает за то, что видят другие игроки над головой персонажа
-function GetPlayerOverheadDisplay(ply)
-    local crown = ""
-    local rankInfo = ProjectSystem.PlayerRanks[ply.rank_id or 1]
-    
-    -- Проверка на наличие административных прав для выдачи короны
-    if ProjectSystem.StaffGroups[ply.group] then
-        crown = ProjectSystem.StaffGroups[ply.group].crown
-    end
-
-    -- Формат: [Корона] Никнейм [Звание]
-    local displayName = string.format("%s %s [%s]", crown, ply.name, rankInfo.title)
-    return displayName, rankInfo.color
+-- 3. БАЗА ДАННЫХ ИГРОКА (ВАЛЮТА И ПРОГРЕСС)
+function SetupPlayer(ply)
+    ply.gold = 5000       -- Донат валюта (G)
+    ply.silver = 10000    -- Обычная валюта (S)
+    ply.rank_id = 1       -- ID из таблицы Ranks
+    ply.group = "user"    -- Группа (moderator, owner и т.д.)
+    ply.exp = 0
 end
 
--- 2. МЕНЮ СПАВНА (GARRYS MOD STYLE)
--- Включает оружие из Standoff, машины и постройки
+-- 4. ВИЗУАЛИЗАЦИЯ НИКНЕЙМА (ТО ЧТО ВИДНО В ИГРЕ)
+function GetOverheadTag(ply)
+    local staffData = GModStandoff.Staff[ply.group]
+    local rankData = GModStandoff.Ranks[ply.rank_id]
+    
+    local crown = staffData and staffData.prefix or ""
+    local title = staffData and staffData.label or rankData.name
+    
+    -- Результат: [👑] Nickname [Legend]
+    return string.format("[%s] %s [%s]", crown, ply.name, title)
+end
+
+-- 5. СПАВН-МЕНЮ (GARRY'S MOD STYLE)
 local SpawnMenu = {
-    Categories = {
-        ["Оружие (Standoff)"] = {
-            {name = "M4 Desertigo", type = "weapon", id = "m4_d"},
-            {name = "AKR Necromancer", type = "weapon", id = "akr_n"},
-            {name = "AWP Dragon", type = "weapon", id = "awp_dr"}
-        },
-        ["Транспорт"] = {
-            {name = "Спорткар", type = "vehicle", id = "car_sport"},
-            {name = "Пикап", type = "vehicle", id = "car_truck"}
-        },
-        ["Здания / Пропсы"] = {
-            {name = "Стена бетонная", type = "prop", id = "wall_1"},
-            {name = "Ящик снабжения", type = "prop", id = "crate_wood"},
-            {name = "Вышка", type = "prop", id = "tower_sniper"}
-        }
+    ["Standoff Weapons"] = {
+        {name = "M4 Desertigo", id = "wep_m4_d", price = 0},
+        {name = "AWP Dragon",   id = "wep_awp_dr", price = 1500}
+    },
+    ["Vehicles"] = {
+        {name = "Sport Car",    id = "veh_sport", price = 5000},
+        {name = "Admin Jeep",   id = "veh_admin", price = 0}
+    },
+    ["RP Props"] = {
+        {name = "Concrete Wall", id = "prop_wall", price = 100},
+        {name = "Vending Machine", id = "prop_vend", price = 300}
     }
 }
 
--- Функция вызова спавна объекта
-function SpawnObject(ply, category, itemIndex)
-    local item = SpawnMenu.Categories[category][itemIndex]
+-- 6. ЛОГИКА СЕРВЕРОВ (RP / STANDOFF / SANDBOX)
+function Internal_SpawnItem(ply, category, itemID)
+    local serverType = ply.currentServerType -- "RP", "Standoff" или "Sandbox"
     
-    -- Проверка: если это обычный сервер, разрешаем всё. 
-    -- Если сервер типа Standoff — спавн пропсов может быть запрещен админом.
-    if ply.server_type == "Standoff" and item.type == "prop" then
-        print("Ошибка: На этом сервере нельзя строить!")
-        return
+    -- Если сервер режима Standoff, запрещаем спавнить пропсы и машины
+    if serverType == "Standoff" and category == "RP Props" then
+        print("Система: В режиме Standoff стройка запрещена!")
+        return false
     end
-
-    print(ply.name .. " заспавнил: " .. item.name)
-    -- Здесь вызывается код создания 3D модели в мире
+    
+    -- Логика создания объекта в мире
+    print(ply.name .. " заспавнил " .. itemID)
 end
 
--- 3. СИСТЕМА ДОНАТА И ПОКУПОК
-function PurchaseItem(ply, price, itemName)
-    if ply.gold_balance >= price then
-        ply.gold_balance = ply.gold_balance - price
-        print(ply.name .. " купил " .. itemName .. ". Остаток: " .. ply.gold_balance .. "G")
-        -- Выдача "плюшки" игроку
+-- 7. СИСТЕМА ДОНАТА (ПОКУПКА ПЛЮШЕК)
+function BuySpecialItem(ply, cost)
+    if ply.gold >= cost then
+        ply.gold = ply.gold - cost
+        print("Покупка успешна! Спасибо за поддержку проекта.")
+        return true
     else
-        print("Недостаточно средств для покупки " .. itemName)
+        print("Недостаточно G-валюты.")
+        return false
     end
 end
 
--- ПРИМЕР ИНИЦИАЛИЗАЦИИ ИГРОКА ПРИ ВХОДЕ
-function OnPlayerJoined(newPlayer)
-    newPlayer.name = "Player123"
-    newPlayer.gold_balance = 500
-    newPlayer.rank_id = 1 -- Rookie
-    newPlayer.group = "user" -- По умолчанию обычный игрок
-    
-    -- Если это владелец (проверка по ID)
-    -- newPlayer.group = "owner" 
-    
-    print("Добро пожаловать в проект! Твой префикс: " .. GetPlayerOverheadDisplay(newPlayer))
-end
+-- Инициализация при подключении
+print("--- CORE SYSTEM LOADED ---")
+print("Project: Standoff x GMod Hybrid")
 
