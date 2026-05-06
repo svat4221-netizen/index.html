@@ -1,91 +1,61 @@
 --[[ 
-    PROJECT: STANDOFF x GMOD - SUPREME CORE SYSTEM 
-    Description: Основной скрипт управления миром, рангами и спавном
+    SUPREME CORE: STANDOFF & GMOD HYBRID 
+    Система: Звания, Короны-Стикеры, Валюта и Меню 
 ]]
 
-local GModStandoff = {
-    -- 1. СИСТЕМА РАНГОВ (ОТ НОВИЧКА ДО ЛЕГЕНДЫ)
+local GameConfig = {
+    -- ЗВАНИЯ ИГРОКОВ (ОТ НИЗШЕГО К ВЫСШЕМУ)
     Ranks = {
-        [1] = {name = "Silver I",   icon = "🥉", color = "#C0C0C0"},
-        [2] = {name = "Gold Nova",  icon = "🥈", color = "#FFD700"},
-        [3] = {name = "Master",     icon = "🥇", color = "#1E90FF"},
-        [4] = {name = "Elite",      icon = "🔥", color = "#FF4500"},
-        [5] = {name = "Legend",     icon = "🏆", color = "#FF0000"} -- Высшее звание
+        [1] = {name = "Новичок",     tag = "[Rookie]", color = "#A0A0A0"},
+        [2] = {name = "Боец",       tag = "[Warrior]",color = "#4CAF50"},
+        [3] = {name = "Ветеран",     tag = "[Veteran]",color = "#2196F3"},
+        [4] = {name = "Мастер",      tag = "[Master]", color = "#9C27B0"},
+        [5] = {name = "ЛЕГЕНДА",     tag = "[LEGEND]", color = "#FFD700"}
     },
 
-    -- 2. СИСТЕМА АДМИН-ПРЕФИКСОВ (СТИКЕРЫ-КОРОНЫ)
+    -- АДМИН-ПРЕФИКСЫ (КОРОНЫ-СТИКЕРЫ)
     Staff = {
-        ["moderator"] = {prefix = "⚪", label = "MODER",  power = 1},
-        ["admin"]     = {prefix = "🟡", label = "ADMIN",  power = 2},
-        ["curator"]   = {prefix = "💎", label = "CURATOR",power = 3}, -- Навороченная
-        ["owner"]     = {prefix = "👑", label = "OWNER",  power = 100} -- Самая крутая
+        ["owner"]   = {crown = "👑", label = "СОЗДАТЕЛЬ", desc = "Золотая с рубинами"},
+        ["curator"] = {crown = "💎", label = "КУРАТОР",   desc = "Платиновая навороченная"},
+        ["admin"]   = {crown = "🟡", label = "АДМИН",     desc = "Золотая классика"},
+        ["moder"]   = {crown = "⚪", label = "МОДЕРАТОР", desc = "Серебряная матовая"}
     }
 }
 
--- 3. БАЗА ДАННЫХ ИГРОКА (ВАЛЮТА И ПРОГРЕСС)
-function SetupPlayer(ply)
-    ply.gold = 5000       -- Донат валюта (G)
-    ply.silver = 10000    -- Обычная валюта (S)
-    ply.rank_id = 1       -- ID из таблицы Ranks
-    ply.group = "user"    -- Группа (moderator, owner и т.д.)
-    ply.exp = 0
-end
-
--- 4. ВИЗУАЛИЗАЦИЯ НИКНЕЙМА (ТО ЧТО ВИДНО В ИГРЕ)
-function GetOverheadTag(ply)
-    local staffData = GModStandoff.Staff[ply.group]
-    local rankData = GModStandoff.Ranks[ply.rank_id]
+-- ФУНКЦИЯ ОТОБРАЖЕНИЯ (НИКНЕЙМ + КОРОНА)
+function CreatePlayerTag(ply)
+    local rank = GameConfig.Ranks[ply.rank_level or 1]
+    local staff = GameConfig.Staff[ply.group or "user"]
     
-    local crown = staffData and staffData.prefix or ""
-    local title = staffData and staffData.label or rankData.name
-    
-    -- Результат: [👑] Nickname [Legend]
-    return string.format("[%s] %s [%s]", crown, ply.name, title)
-end
-
--- 5. СПАВН-МЕНЮ (GARRY'S MOD STYLE)
-local SpawnMenu = {
-    ["Standoff Weapons"] = {
-        {name = "M4 Desertigo", id = "wep_m4_d", price = 0},
-        {name = "AWP Dragon",   id = "wep_awp_dr", price = 1500}
-    },
-    ["Vehicles"] = {
-        {name = "Sport Car",    id = "veh_sport", price = 5000},
-        {name = "Admin Jeep",   id = "veh_admin", price = 0}
-    },
-    ["RP Props"] = {
-        {name = "Concrete Wall", id = "prop_wall", price = 100},
-        {name = "Vending Machine", id = "prop_vend", price = 300}
-    }
-}
-
--- 6. ЛОГИКА СЕРВЕРОВ (RP / STANDOFF / SANDBOX)
-function Internal_SpawnItem(ply, category, itemID)
-    local serverType = ply.currentServerType -- "RP", "Standoff" или "Sandbox"
-    
-    -- Если сервер режима Standoff, запрещаем спавнить пропсы и машины
-    if serverType == "Standoff" and category == "RP Props" then
-        print("Система: В режиме Standoff стройка запрещена!")
-        return false
+    local prefix = ""
+    if staff then
+        prefix = staff.crown .. " " .. staff.label .. " | "
     end
     
-    -- Логика создания объекта в мире
-    print(ply.name .. " заспавнил " .. itemID)
+    -- Пример: 👑 СОЗДАТЕЛЬ | PlayerName [LEGEND]
+    return prefix .. ply.name .. " " .. rank.tag
 end
 
--- 7. СИСТЕМА ДОНАТА (ПОКУПКА ПЛЮШЕК)
-function BuySpecialItem(ply, cost)
+-- МЕНЮ СПАВНА (ОБЪЕДИНЕННОЕ)
+local SpawnMenu = {
+    ["Standoff_Weapons"] = {"M4_Desertigo", "AKR_Treasure", "AWP_Beast"},
+    ["GMod_Vehicles"]    = {"SportCar_Red", "Military_Jeep"},
+    ["GMod_Buildings"]   = {"Wall_Stone", "Prop_Crate", "Tower_Base"}
+}
+
+-- СИСТЕМА ДОНАТА И ПОКУПОК
+function ProcessPurchase(ply, itemId, cost)
     if ply.gold >= cost then
         ply.gold = ply.gold - cost
-        print("Покупка успешна! Спасибо за поддержку проекта.")
+        print("Покупка [" .. itemId .. "] завершена!")
+        -- Выдача предмета (оружие, машина или донат-префикс)
         return true
     else
-        print("Недостаточно G-валюты.")
+        print("Ошибка: недостаточно G-валюты!")
         return false
     end
 end
 
--- Инициализация при подключении
-print("--- CORE SYSTEM LOADED ---")
-print("Project: Standoff x GMod Hybrid")
+print(">>> CORE SYSTEM: STANDOFF x GMOD УСПЕШНО ЗАПУЩЕНА <<<")
+
 
