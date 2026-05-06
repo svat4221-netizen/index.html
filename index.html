@@ -1,164 +1,107 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPRK: Fix 10.0</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
-    <style>
-        body { margin: 0; overflow: hidden; background: #000; touch-action: none; font-family: sans-serif; }
-        #hud { position: absolute; top: 10px; left: 10px; color: #fff; z-index: 10; pointer-events: none; }
-        
-        /* КНОПКА ВЫХОДА - СДЕЛАЛ ЕЩЕ БОЛЬШЕ */
-        #exit-btn { 
-            position: absolute; bottom: 250px; left: 20px; 
-            width: 150px; height: 60px; background: #ff0000; color: white; 
-            border: 4px solid #fff; border-radius: 10px; 
-            display: none; z-index: 99999; font-weight: bold;
-        }
+-- ========================================================
+-- PROJECT: STANDOFF X GMOD (CORE SYSTEM V2)
+-- ========================================================
 
-        #phone-btn { position: absolute; bottom: 20px; right: 20px; width: 70px; height: 70px; background: #c0392b; border-radius: 50%; border: 3px solid #fff; z-index: 100; display: flex; align-items: center; justify-content: center; font-size: 30px; }
-        #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 130px; height: 130px; z-index: 50; }
-        
-        #phone { position: absolute; bottom: -100%; left: 50%; transform: translateX(-50%); width: 95%; height: 80%; background: #111; border-radius: 20px 20px 0 0; transition: 0.3s; z-index: 2000; border: 2px solid #444; }
-        #phone.active { bottom: 0; }
-        .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 20px; }
-    </style>
-</head>
-<body>
+local ProjectSystem = {
+    -- ТАБЛИЦА ЗВАНИЙ (ОТ НОВИЧКА ДО ЛЕГЕНДЫ)
+    -- Каждое звание имеет свой ID и визуальный цвет
+    PlayerRanks = {
+        [1] = {title = "Rookie", color = "#C0C0C0", icon = "🥉"}, -- Самое низкое
+        [2] = {title = "Warrior", color = "#4CAF50", icon = "⚔️"},
+        [3] = {title = "Veteran", color = "#2196F3", icon = "🎖️"},
+        [4] = {title = "Master", color = "#9C27B0", icon = "🔮"},
+        [5] = {title = "Elite", color = "#FF5722", icon = "🔥"},
+        [6] = {title = "Legend", color = "#FFD700", icon = "🏆"}  -- Самое высокое
+    },
 
-    <div id="hud">
-        <div id="status">ЗАГРУЗКА...</div>
-        <div id="dist">Дистанция: -</div>
-    </div>
+    -- СИСТЕМА АДМИНИСТРАЦИИ (ПРЕФИКСЫ-КОРОНЫ)
+    StaffGroups = {
+        ["moderator"] = {label = "Модератор", crown = "⚪", desc = "Серебряная корона"},
+        ["admin"]     = {label = "Администратор", crown = "🟡", desc = "Золотая корона"},
+        ["curator"]   = {label = "Куратор", crown = "💎", desc = "Платиновая корона"},
+        ["owner"]     = {label = "Владелец", crown = "👑", desc = "Корона Создателя"}
+    },
 
-    <div id="joystick-zone"></div>
-    <button id="exit-btn" onclick="exitVehicle()">ВЫЙТИ (EXIT)</button>
-    <div id="phone-btn" onclick="togglePhone()">📱</div>
+    -- МАГАЗИН И ВАЛЮТА
+    Currency = {
+        Gold = "G", -- Донат валюта
+        Silver = "S" -- Игровая валюта
+    }
+}
 
-    <div id="phone">
-        <div class="app-grid">
-            <div style="color:white; text-align:center;" onclick="alert('Арсенал')">🔫<br>Арсенал</div>
-            <div style="color:white; text-align:center;" onclick="alert('Чат')">💬<br>Чат</div>
-            <div style="color:white; text-align:center;" onclick="alert('Звонки')">📞<br>Звонки</div>
-            <div style="color:white; text-align:center;" onclick="alert('Контакты')">👤<br>Контакты</div>
-            <div style="color:white; text-align:center;" onclick="togglePhone()">❌<br>Закрыть</div>
-        </div>
-    </div>
+-- 1. ЛОГИКА ОТОБРАЖЕНИЯ НИКНЕЙМОВ И ПРЕФИКСОВ
+-- Эта функция отвечает за то, что видят другие игроки над головой персонажа
+function GetPlayerOverheadDisplay(ply)
+    local crown = ""
+    local rankInfo = ProjectSystem.PlayerRanks[ply.rank_id or 1]
+    
+    -- Проверка на наличие административных прав для выдачи короны
+    if ProjectSystem.StaffGroups[ply.group] then
+        crown = ProjectSystem.StaffGroups[ply.group].crown
+    end
 
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    -- Формат: [Корона] Никнейм [Звание]
+    local displayName = string.format("%s %s [%s]", crown, ply.name, rankInfo.title)
+    return displayName, rankInfo.color
+end
+
+-- 2. МЕНЮ СПАВНА (GARRYS MOD STYLE)
+-- Включает оружие из Standoff, машины и постройки
+local SpawnMenu = {
+    Categories = {
+        ["Оружие (Standoff)"] = {
+            {name = "M4 Desertigo", type = "weapon", id = "m4_d"},
+            {name = "AKR Necromancer", type = "weapon", id = "akr_n"},
+            {name = "AWP Dragon", type = "weapon", id = "awp_dr"}
+        },
+        ["Транспорт"] = {
+            {name = "Спорткар", type = "vehicle", id = "car_sport"},
+            {name = "Пикап", type = "vehicle", id = "car_truck"}
+        },
+        ["Здания / Пропсы"] = {
+            {name = "Стена бетонная", type = "prop", id = "wall_1"},
+            {name = "Ящик снабжения", type = "prop", id = "crate_wood"},
+            {name = "Вышка", type = "prop", id = "tower_sniper"}
         }
     }
-    </script>
+}
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+-- Функция вызова спавна объекта
+function SpawnObject(ply, category, itemIndex)
+    local item = SpawnMenu.Categories[category][itemIndex]
+    
+    -- Проверка: если это обычный сервер, разрешаем всё. 
+    -- Если сервер типа Standoff — спавн пропсов может быть запрещен админом.
+    if ply.server_type == "Standoff" and item.type == "prop" then
+        print("Ошибка: На этом сервере нельзя строить!")
+        return
+    end
 
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+    print(ply.name .. " заспавнил: " .. item.name)
+    -- Здесь вызывается код создания 3D модели в мире
+end
 
-        scene.add(new THREE.AmbientLight(0xffffff, 2));
-        const sun = new THREE.DirectionalLight(0xffffff, 1.5);
-        sun.position.set(10, 50, 10);
-        scene.add(sun);
+-- 3. СИСТЕМА ДОНАТА И ПОКУПОК
+function PurchaseItem(ply, price, itemName)
+    if ply.gold_balance >= price then
+        ply.gold_balance = ply.gold_balance - price
+        print(ply.name .. " купил " .. itemName .. ". Остаток: " .. ply.gold_balance .. "G")
+        -- Выдача "плюшки" игроку
+    else
+        print("Недостаточно средств для покупки " .. itemName)
+    end
+end
 
-        const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.MeshPhongMaterial({color: 0x222222}));
-        ground.rotation.x = -Math.PI / 2;
-        scene.add(ground);
-
-        // --- МАШИНА ---
-        const carContainer = new THREE.Group(); // Главный контейнер
-        scene.add(carContainer);
-        carContainer.position.set(10, 0, -15);
-
-        const loader = new GLTFLoader();
-        loader.load('mercedes-benz_cls_63_amg.glb', (gltf) => {
-            const model = gltf.scene;
-            model.scale.set(2.3, 2.3, 2.3);
-            
-            // ПРИНУДИТЕЛЬНОЕ ЦЕНТРИРОВАНИЕ МОДЕЛИ
-            const box = new THREE.Box3().setFromObject(model);
-            const center = box.getCenter(new THREE.Vector3());
-            model.position.x = -center.x;
-            model.position.z = -center.z;
-            
-            carContainer.add(model);
-            document.getElementById('status').innerText = "ПЕШЕХОД: НАЙДИ АВТО";
-        });
-
-        // --- ИГРОК ---
-        const player = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1), new THREE.MeshPhongMaterial({color: 0x00ff00}));
-        body.position.y = 1;
-        player.add(body);
-        scene.add(player);
-
-        // --- УПРАВЛЕНИЕ ---
-        let moveY = 0, moveX = 0, isDriving = false;
-        const joy = nipplejs.create({zone: document.getElementById('joystick-zone'), mode: 'static', position: {left:'70px', bottom:'70px'}});
-        joy.on('move', (e, d) => { moveY = d.vector.y; moveX = d.vector.x; });
-        joy.on('end', () => { moveY = 0; moveX = 0; });
-
-        window.togglePhone = () => document.getElementById('phone').classList.toggle('active');
-        window.exitVehicle = () => {
-            isDriving = false;
-            player.visible = true;
-            player.position.copy(carContainer.position).add(new THREE.Vector3(5, 0, 5));
-            document.getElementById('exit-btn').style.display = "none";
-        };
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            if (isDriving) {
-                // Движение МАШИНЫ
-                if (Math.abs(moveY) > 0.1) {
-                    carContainer.translateZ(moveY * 0.8);
-                    carContainer.rotation.y += moveX * (moveY > 0 ? -0.04 : 0.04);
-                }
-                player.position.copy(carContainer.position);
-
-                // КАМЕРА: СТРОГО СЗАДИ carContainer
-                const relativeCameraOffset = new THREE.Vector3(0, 7, 18);
-                const cameraOffset = relativeCameraOffset.applyMatrix4(carContainer.matrixWorld);
-                camera.position.lerp(cameraOffset, 0.1);
-                camera.lookAt(carContainer.position);
-
-            } else {
-                // ПЕШЕХОД
-                if (Math.abs(moveY) > 0.1) player.translateZ(-moveY * 0.2);
-                if (Math.abs(moveX) > 0.1) player.rotation.y -= moveX * 0.05;
-
-                const d = player.position.distanceTo(carContainer.position);
-                document.getElementById('dist').innerText = "До машины: " + d.toFixed(1);
-
-                if (d < 7) {
-                    isDriving = true;
-                    player.visible = false;
-                    document.getElementById('exit-btn').style.display = "block";
-                    document.getElementById('status').innerText = "В МАШИНЕ";
-                }
-
-                const relativeCameraOffset = new THREE.Vector3(0, 10, 20);
-                const cameraOffset = relativeCameraOffset.applyMatrix4(player.matrixWorld);
-                camera.position.lerp(cameraOffset, 0.1);
-                camera.lookAt(player.position);
-            }
-
-            renderer.render(scene, camera);
-        }
-        animate();
-    </script>
-</body>
-</html>
-
-
+-- ПРИМЕР ИНИЦИАЛИЗАЦИИ ИГРОКА ПРИ ВХОДЕ
+function OnPlayerJoined(newPlayer)
+    newPlayer.name = "Player123"
+    newPlayer.gold_balance = 500
+    newPlayer.rank_id = 1 -- Rookie
+    newPlayer.group = "user" -- По умолчанию обычный игрок
+    
+    -- Если это владелец (проверка по ID)
+    -- newPlayer.group = "owner" 
+    
+    print("Добро пожаловать в проект! Твой префикс: " .. GetPlayerOverheadDisplay(newPlayer))
+end
 
