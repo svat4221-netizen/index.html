@@ -3,45 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPRK: Ultimate Mercedes v9.7</title>
+    <title>DPRK: Final Mercedes v9.9</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background: #1a1a1a; touch-action: none; font-family: sans-serif; }
         #hud { position: absolute; top: 15px; left: 15px; color: #fff; z-index: 10; text-shadow: 2px 2px 4px #000; pointer-events: none; }
         
-        /* КНОПКА ВЫХОДА */
+        /* КНОПКА ВЫХОДА - МАКСИМАЛЬНЫЙ ПРИОРИТЕТ */
         #exit-btn { 
-            position: absolute; bottom: 180px; left: 20px; 
-            padding: 18px 30px; background: #e74c3c; color: white; 
+            position: absolute; bottom: 220px; left: 20px; 
+            padding: 20px 35px; background: #c0392b; color: white; 
             border: 3px solid #fff; border-radius: 15px; 
-            display: none; z-index: 1000; font-weight: bold; font-size: 16px;
+            display: none; z-index: 9999; font-weight: bold; font-size: 18px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+            pointer-events: auto;
         }
 
-        #phone-btn { position: absolute; bottom: 20px; right: 20px; width: 65px; height: 65px; background: #c0392b; border-radius: 50%; border: 3px solid #fff; z-index: 100; display: flex; align-items: center; justify-content: center; font-size: 28px; }
-        #fire-btn { position: absolute; bottom: 110px; right: 20px; width: 75px; height: 75px; background: rgba(231, 76, 60, 0.8); border-radius: 50%; border: 3px solid #fff; z-index: 90; display: none; align-items: center; justify-content: center; font-size: 30px; }
-        #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; z-index: 50; }
+        #phone-btn { position: absolute; bottom: 20px; right: 20px; width: 70px; height: 70px; background: #c0392b; border-radius: 50%; border: 3px solid #fff; z-index: 100; display: flex; align-items: center; justify-content: center; font-size: 30px; }
+        #fire-btn { position: absolute; bottom: 120px; right: 20px; width: 80px; height: 80px; background: rgba(231, 76, 60, 0.8); border-radius: 50%; border: 3px solid #fff; z-index: 90; display: none; align-items: center; justify-content: center; font-size: 35px; }
+        #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 130px; height: 130px; z-index: 50; }
 
-        /* ТЕЛЕФОН */
+        /* ИНТЕРФЕЙС ТЕЛЕФОНА */
         #phone { position: absolute; bottom: -100%; left: 50%; transform: translateX(-50%); width: 95%; height: 85%; background: #0a0a0a; border-radius: 35px 35px 0 0; transition: 0.4s; z-index: 2000; padding: 15px; border: 2px solid #333; box-sizing: border-box; }
         #phone.active { bottom: 0; }
         #phone-display { background: #111; height: 100%; border-radius: 20px; padding: 15px; color: #fff; display: flex; flex-direction: column; overflow: hidden; }
         
+        .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
+        .app-item { display: flex; flex-direction: column; align-items: center; font-size: 12px; cursor: pointer; text-align: center; }
+        .icon-sq { width: 60px; height: 60px; background: #222; border-radius: 16px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; font-size: 28px; border: 1px solid #444; }
         .app-page { display: none; flex-direction: column; height: 100%; }
         .app-page.active { display: flex; }
-        
-        .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
-        .app-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; cursor: pointer; text-align: center; color: white; }
-        .icon-sq { width: 55px; height: 55px; background: #222; border-radius: 14px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; font-size: 26px; border: 1px solid #444; }
-        
-        .back-btn { background: #444; color: white; border: none; padding: 8px; border-radius: 5px; margin-bottom: 10px; width: 60px; }
-        #chat-box { flex-grow: 1; background: #000; border-radius: 10px; padding: 10px; overflow-y: auto; margin-bottom: 10px; font-size: 13px; }
+        .back-btn { background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 8px; margin-bottom: 15px; width: 80px; }
     </style>
 </head>
 <body>
 
     <div id="hud">
         <div id="status-text"><b>РЕЖИМ: ПЕШЕХОД</b></div>
-        <div id="dist-text" style="font-size: 12px; color: #aaa;">Дистанция до авто: -</div>
+        <div id="dist-text" style="font-size: 13px; color: #ccc; margin-top: 5px;">Дистанция до авто: -</div>
     </div>
 
     <div id="joystick-zone"></div>
@@ -52,7 +51,7 @@
     <div id="phone">
         <div id="phone-display">
             <div id="p-main" class="app-page active">
-                <center><h3 style="color:#c0392b; margin: 10px 0;">KORYO v9.7</h3></center>
+                <center><h3 style="color:#c0392b; margin: 10px 0;">KORYO v9.9</h3></center>
                 <div class="app-grid">
                     <div class="app-item" onclick="openApp('ars')"><div class="icon-sq">🔫</div>Арсенал</div>
                     <div class="app-item" onclick="openApp('msg')"><div class="icon-sq">💬</div>Чат</div>
@@ -63,28 +62,29 @@
             </div>
 
             <div id="p-ars" class="app-page">
-                <button class="back-btn" onclick="openApp('main')">←</button>
-                <button onclick="takeWeapon('M4A1')" style="padding:15px; margin-bottom:10px;">Взять M4A1 Desert</button>
-                <button onclick="takeWeapon('Deagle')" style="padding:15px; margin-bottom:10px;">Взять Desert Eagle</button>
-                <button onclick="takeWeapon(null)" style="padding:10px; background: #333; color: white;">Убрать оружие</button>
+                <button class="back-btn" onclick="openApp('main')">← Назад</button>
+                <button onclick="takeWeapon('M4A1 Desert')" style="padding:15px; margin-bottom:10px; width:100%;">M4A1 Desert</button>
+                <button onclick="takeWeapon('Снайперка')" style="padding:15px; margin-bottom:10px; width:100%;">Снайперская винтовка</button>
+                <button onclick="takeWeapon(null)" style="padding:10px; width:100%; background:#222; color:white;">Убрать оружие</button>
             </div>
 
             <div id="p-msg" class="app-page">
-                <button class="back-btn" onclick="openApp('main')">←</button>
-                <div id="chat-box">Система: Добро пожаловать в защищенный чат.</div>
+                <button class="back-btn" onclick="openApp('main')">← Назад</button>
+                <div style="background:#000; flex-grow:1; border-radius:10px; padding:10px;">
+                    <div style="color:#555; text-align:center; margin-top:50%;">Входящих сообщений нет</div>
+                </div>
             </div>
 
             <div id="p-calls" class="app-page">
-                <button class="back-btn" onclick="openApp('main')">←</button>
-                <center><div style="margin-top:50px;">Нет активных вызовов</div></center>
+                <button class="back-btn" onclick="openApp('main')">← Назад</button>
+                <center><div style="margin-top:40px;">Линия свободна...</div></center>
             </div>
 
             <div id="p-cont" class="app-page">
-                <button class="back-btn" onclick="openApp('main')">←</button>
+                <button class="back-btn" onclick="openApp('main')">← Назад</button>
                 <div style="padding:10px;">
-                    <div>• Генерал Ли</div>
-                    <hr border="0.1">
-                    <div>• Центр управления</div>
+                    <div style="padding:10px; border-bottom:1px solid #333;">• Генерал (Штаб)</div>
+                    <div style="padding:10px; border-bottom:1px solid #333;">• Арсенал Пхеньян</div>
                 </div>
             </div>
         </div>
@@ -111,16 +111,15 @@
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 2.0)); 
-        const sun = new THREE.DirectionalLight(0xffffff, 2.0);
-        sun.position.set(10, 50, 10);
+        scene.add(new THREE.AmbientLight(0xffffff, 2.5)); 
+        const sun = new THREE.DirectionalLight(0xffffff, 1.8);
+        sun.position.set(20, 60, 20);
         scene.add(sun);
 
         const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.MeshPhongMaterial({color: 0x222222}));
         ground.rotation.x = -Math.PI / 2;
         scene.add(ground);
 
-        // МАШИНА
         const car = new THREE.Group();
         car.position.set(15, 0, -20);
         scene.add(car);
@@ -128,20 +127,17 @@
         const loader = new GLTFLoader();
         loader.load('mercedes-benz_cls_63_amg.glb', (gltf) => {
             const model = gltf.scene;
-            model.traverse(n => { if(n.isMesh) n.material.side = THREE.DoubleSide; });
-            model.scale.set(2.0, 2.0, 2.0);
+            model.scale.set(2.3, 2.3, 2.3);
             model.rotation.y = Math.PI; 
             car.add(model);
         });
 
-        // ИГРОК
         const player = new THREE.Group();
         const pBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1), new THREE.MeshPhongMaterial({color: 0x3498db}));
         pBody.position.y = 1;
         player.add(pBody);
         scene.add(player);
 
-        // УПРАВЛЕНИЕ
         let mZ = 0, mX = 0, isDriving = false;
         const joy = nipplejs.create({zone: document.getElementById('joystick-zone'), mode: 'static', position: {left:'70px', bottom:'70px'}, color:'white'});
         joy.on('move', (e, d) => { mZ = d.vector.y; mX = d.vector.x; });
@@ -160,7 +156,9 @@
         window.exitVehicle = () => {
             isDriving = false;
             player.visible = true;
-            player.position.set(car.position.x + 5, 0, car.position.z + 2);
+            // Смещение при выходе, чтобы не застрять в текстурах
+            const exitOffset = new THREE.Vector3(6, 0, 0).applyQuaternion(car.quaternion);
+            player.position.copy(car.position).add(exitOffset);
             document.getElementById('exit-btn').style.display = "none";
             document.getElementById('status-text').innerText = "РЕЖИМ: ПЕШЕХОД";
         };
@@ -169,27 +167,30 @@
             requestAnimationFrame(animate);
 
             if(isDriving) {
-                // Движение МАШИНЫ (GTA Style)
+                // Движение авто
                 if (Math.abs(mZ) > 0.1) {
-                    let speed = mZ * 0.8;
+                    let speed = mZ * 0.95;
                     car.translateZ(speed);
                     if (Math.abs(mX) > 0.1) {
                         car.rotation.y += mX * (speed > 0 ? -0.045 : 0.045);
                     }
                 }
                 player.position.copy(car.position);
+                
+                // Центрированная камера строго за Мерседесом
                 const camOffset = new THREE.Vector3(0, 8, 22).applyQuaternion(car.quaternion);
-                camera.position.lerp(car.position.clone().add(camOffset), 0.1);
+                const targetCamPos = car.position.clone().add(camOffset);
+                camera.position.lerp(targetCamPos, 0.15);
                 camera.lookAt(car.position);
             } else {
-                // Движение ПЕШЕХОДА
-                if (Math.abs(mZ) > 0.1) player.translateZ(-mZ * 0.25);
-                if (Math.abs(mX) > 0.1) player.rotation.y -= mX * 0.07;
+                // Движение пешехода
+                if (Math.abs(mZ) > 0.1) player.translateZ(-mZ * 0.28);
+                if (Math.abs(mX) > 0.1) player.rotation.y -= mX * 0.08;
 
                 const dist = player.position.distanceTo(car.position);
                 document.getElementById('dist-text').innerText = "Дистанция до авто: " + dist.toFixed(1);
 
-                if(dist < 10) {
+                if(dist < 9) {
                     isDriving = true;
                     player.visible = false;
                     document.getElementById('exit-btn').style.display = "block";
@@ -212,6 +213,7 @@
     </script>
 </body>
 </html>
+
 
 
 
