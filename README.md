@@ -1,377 +1,268 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minecraft HTML5 Edition</title>
-    <style>
-        body { margin: 0; overflow: hidden; font-family: 'Courier New', monospace; user-select: none; background: #000; }
-        #canvas { display: block; width: 100vw; height: 100vh; }
-        
-        /* Интерфейс (UI) */
-        #ui-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .panel { background: rgba(0,0,0,0.6); color: #fff; padding: 15px; border: 2px solid #555; position: absolute; pointer-events: auto; }
-        
-        #controls { top: 10px; left: 10px; font-size: 12px; line-height: 1.5; width: 280px; }
-        #stats { top: 10px; right: 10px; text-align: right; }
-        
-        /* Шкала Энергии */
-        .energy-bar-container { width: 150px; height: 15px; background: #333; border: 2px solid #fff; margin-top: 5px; display: inline-block;}
-        #energy-bar { width: 100%; height: 100%; background: #ffaa00; transition: width 0.1s; }
-        
-        /* Хотбар предметов */
-        #hotbar { bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; background: rgba(0,0,0,0.8); border: 3px solid #444; padding: 4px; }
-        .slot { width: 50px; height: 50px; border: 2px solid #555; margin: 0 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; text-align: center; color: white; font-weight: bold;}
-        .slot.active { border-color: #fff; background: rgba(255,255,255,0.2); }
-        
-        /* Прицел для 1-го лица */
-        #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 20px; font-weight: bold; display: none; }
-        
-        /* Цвета ролей */
-        .role-Игрок { color: #aaa; }
-        .role-Модератор { color: #55ff55; }
-        .role-Администратор { color: #ff5555; }
-        .role-Куратор { color: #aa00aa; font-weight: bold; }
-    </style>
+  <meta charset="UTF-8">
+  <title>3D Craft Sandbox</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+      user-select: none;
+    }
+    #ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 12px;
+      border-radius: 8px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .badge {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    #crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      color: white;
+      transform: translate(-50%, -50%);
+      font-size: 20px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    #instructions {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      background: rgba(0,0,0,0.8);
+      padding: 20px;
+      text-align: center;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 20;
+    }
+  </style>
+  <!-- Подключение Three.js и контроллера управления -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
 </head>
 <body>
 
-    <canvas id="canvas"></canvas>
+<div id="instructions">
+  <h2>Кликните, чтобы начать игру</h2>
+  <p>Управление: WASD — перемещение, Мышь — осмотр<br>ЛКМ — сломать блок</p>
+</div>
 
-    <div id="ui-container">
-        <div id="crosshair">+</div>
+<div id="crosshair">+</div>
 
-        <div class="panel" id="controls">
-            <h3 style="margin:0 0 10px 0; color:#55ff55;">MINECRAFT JS</h3>
-            <b>W, A, S, D</b> — Движение<br>
-            <b>Мышь</b> — Обзор (Кликните на экран)<br>
-            <b>Кнопка V</b> — Смена вида (1-е / 3-е лицо)<br>
-            <b>Цифры 1-5</b> — Выбор предмета<br>
-            <b>ЛКМ</b> — Сломать блок<br>
-            <b>ПКМ</b> — Поставить блок<br>
-            <hr style="border-color:#444;">
-            <div id="view-mode-text">Вид: От 3-го лица</div>
-        </div>
+<div id="ui">
+  <div>Ранг: <span id="player-rank" class="badge"></span></div>
+  <div>Инвентарь: <span id="inventory">Пусто</span></div>
+</div>
 
-        <div class="panel" id="stats">
-            <div>Ваш статус: <span class="role-Куратор">[Куратор] Разработчик</span></div>
-            <div>Энергия: <div class="energy-bar-container"><div id="energy-bar"></div></div></div>
-            <h4 style="margin: 10px 0 5px 0; text-align:center;">Игроки онлайн (Sim):</h4>
-            <div id="player-list" style="font-size:11px; text-align:left;"></div>
-        </div>
+<script>
+  // --- 1. СИСТЕМА РАНГОВ ---
+  const RANKS = {
+    PLAYER: { name: 'Обычный игрок', color: '#888888' },
+    MODERATOR: { name: 'Модератор', color: '#1E90FF' },
+    ADMIN: { name: 'Администратор', color: '#FF4500' },
+    CURATOR: { name: 'Куратор', color: '#9370DB' },
+    CREATOR: { name: 'Создатель', color: '#FFD700' }
+  };
 
-        <div id="hotbar">
-            <div class="slot active" id="slot-1" style="background:#559933;">Трава<br>(1)</div>
-            <div class="slot" id="slot-2" style="background:#866043;">Земля<br>(2)</div>
-            <div class="slot" id="slot-3" style="background:#777777;">Камень<br>(3)</div>
-            <div class="slot" id="slot-4" style="background:#44ddff; color:#000;">Алмаз<br>(4)</div>
-            <div class="slot" id="slot-5" style="background:#ffdd44; color:#000;">Золото<br>(5)</div>
-        </div>
-    </div>
+  const player = {
+    rank: RANKS.CREATOR,
+    inventory: {}
+  };
 
-    <script>
-        // --- 1. ИНИЦИАЛИЗАЦИЯ И НАСТРОЙКА ДВИЖКА ---
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+  // --- 2. СЦЕНА, КАМЕРА И ОСВЕЩЕНИЕ ---
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87CEEB); // Небо
 
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
 
-        // Игровые параметры
-        let isFirstPerson = false; // По умолчанию 3-е лицо
-        let energy = 100;
-        let activeSlot = 1;
-        
-        // Список доступных блоков из Майнкрафта
-        const BLOCKS = {
-            1: { name: 'Трава', color: '#559933', topColor: '#77cc44' },
-            2: { name: 'Земля', color: '#866043', topColor: '#866043' },
-            3: { name: 'Камень', color: '#777777', topColor: '#888888' },
-            4: { name: 'Алмазная руда', color: '#557788', topColor: '#44ddff' },
-            5: { name: 'Золотая руда', color: '#666655', topColor: '#ffdd44' }
-        };
+  // Свет
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambientLight);
 
-        // --- 2. ИГРОК, КАМЕРА И СЕТЬ ---
-        let player = {
-            x: 400, z: 400, y: 150,
-            yaw: 0, pitch: 0.4,
-            speed: 4,
-            radius: 15, height: 40
-        };
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  dirLight.position.set(20, 40, 20);
+  scene.add(dirLight);
 
-        // Симуляция онлайн игроков с ролями
-        let onlinePlayers = [
-            { id: 1, name: 'Stevka_Pro', role: 'Игрок', x: 350, z: 450, color: '#3366cc' },
-            { id: 2, name: 'Admin_Vanya', role: 'Администратор', x: 500, z: 380, color: '#cc3333' },
-            { id: 3, name: 'Moder_Dima', role: 'Модератор', x: 420, z: 520, color: '#33cc33' }
-        ];
+  // --- 3. РЕЕСТР БЛОКОВ И МАТЕРИАЛЫ ---
+  const blockGeometry = new THREE.BoxGeometry(1, 1, 1);
+  const BLOCKS = {
+    GRASS: { name: 'Трава', material: new THREE.MeshLamberMaterial({ color: 0x4CA64C }) },
+    DIRT: { name: 'Земля', material: new THREE.MeshLamberMaterial({ color: 0x8B4513 }) },
+    STONE: { name: 'Камень', material: new THREE.MeshLamberMaterial({ color: 0x808080 }) },
+    DIAMOND_ORE: { name: 'Алмазная руда', material: new THREE.MeshLamberMaterial({ color: 0x00FFFF }) }
+  };
 
-        // Обновление таб-листа игроков на экране
-        function updateTabList() {
-            let html = `<div><span class="role-Куратор">[Куратор]</span> Вы</div>`;
-            onlinePlayers.forEach(p => {
-                html += `<div><span class="role-${p.role}">[${p.role}]</span> ${p.name}</div>`;
-            });
-            document.getElementById('player-list').innerHTML = html;
-        }
-        updateTabList();
+  // Исправление метода материала для Three.js
+  BLOCKS.GRASS.material = new THREE.MeshLambertMaterial({ color: 0x4CA64C });
+  BLOCKS.DIRT.material = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+  BLOCKS.STONE.material = new THREE.MeshLambertMaterial({ color: 0x808080 });
+  BLOCKS.DIAMOND_ORE.material = new THREE.MeshLambertMaterial({ color: 0x00FFFF });
 
-        // --- 3. ГЕНЕРАЦИЯ МИРА (ПСЕВДО-3D МАТРИЦА БЛОКОВ) ---
-        let world = [];
-        const worldSize = 16;
-        const blockSize = 40;
+  const objects = []; // Массив блоков для проверки кликов
 
-        // Создаем рельеф Майнкрафта
-        for(let x=0; x<worldSize; x++) {
-            world[x] = [];
-            for(let z=0; z<worldSize; z++) {
-                // Изменяем высоту для имитации холмов
-                let height = 2 + Math.floor(Math.sin(x*0.5) * 1.5 + Math.cos(z*0.5) * 1.5);
-                world[x][z] = [];
-                for(let y=0; y<6; y++) {
-                    let blockType = 0; // Воздух
-                    if (y < height - 1) {
-                        // Глубокие слои: камень или случайная руда
-                        let rand = Math.random();
-                        if (rand < 0.05) blockType = 4; // Алмаз
-                        else if (rand < 0.12) blockType = 5; // Золото
-                        else blockType = 3; // Камень
-                    } else if (y < height) {
-                        blockType = 2; // Земля
-                    } else if (y === height) {
-                        blockType = 1; // Трава
-                    }
-                    world[x][z][y] = blockType;
-                }
-            }
-        }
+  // --- 4. ГЕНЕРАЦИЯ 3D-МИРА ---
+  const worldSize = 16;
+  for (let x = -worldSize / 2; x < worldSize / 2; x++) {
+    for (let z = -worldSize / 2; z < worldSize / 2; z++) {
+      for (let y = 0; y < 5; y++) {
+        let blockType = BLOCKS.STONE;
+        if (y === 4) blockType = BLOCKS.GRASS;
+        else if (y >= 2) blockType = BLOCKS.DIRT;
+        else if (Math.random() < 0.15) blockType = BLOCKS.DIAMOND_ORE;
 
-        // --- 4. СИСТЕМА УПРАВЛЕНИЯ КЛАВИАТУРОЙ И МЫШЬЮ ---
-        let keys = {};
-        window.addEventListener('keydown', (e) => {
-            keys[e.key.toLowerCase()] = true;
-            // Смена вида (кнопка V)
-            if(e.key.toLowerCase() === 'v') {
-                isFirstPerson = !isFirstPerson;
-                document.getElementById('view-mode-text').innerText = isFirstPerson ? "Вид: От 1-го лица" : "Вид: От 3-го лица";
-                document.getElementById('crosshair').style.display = isFirstPerson ? "block" : "none";
-            }
-            // Хотбар предметов (1-5)
-            if(e.key >= '1' && e.key <= '5') {
-                document.getElementById(`slot-${activeSlot}`).classList.remove('active');
-                activeSlot = parseInt(e.key);
-                document.getElementById(`slot-${activeSlot}`).classList.add('active');
-            }
-        });
-        window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+        const cube = new THREE.Mesh(blockGeometry, blockType.material);
+        cube.position.set(x, y, z);
+        cube.userData = { name: blockType.name };
+        scene.add(cube);
+        objects.push(cube);
+      }
+    }
+  }
 
-        // Захват мышки
-        let mouseLocked = false;
-        canvas.addEventListener('click', () => {
-            canvas.requestPointerLock();
-        });
-        document.addEventListener('pointerlockchange', () => {
-            mouseLocked = document.pointerLockElement === canvas;
-        });
+  // --- 5. СИСТЕМА МОДОВ ---
+  const ModLoader = {
+    registerBlock: function(key, name, colorHex) {
+      BLOCKS[key] = {
+        name: name,
+        material: new THREE.MeshLambertMaterial({ color: colorHex })
+      };
+      console.log(`[ModLoader] Добавлен блок: ${name}`);
+    }
+  };
 
-        // Движение мыши (вращение камеры вокруг игрока)
-        window.addEventListener('mousemove', (e) => {
-            if (mouseLocked) {
-                player.yaw += e.movementX * 0.005;
-                player.pitch += e.movementY * 0.005;
-                player.pitch = Math.max(-0.5, Math.min(1.2, player.pitch)); // Ограничение наклона
-            }
-        });
+  // Пример работы мода: добавляем Рубин
+  ModLoader.registerBlock('RUBY_ORE', 'Рубиновая руда', 0xE0115F);
 
-        // Клик мыши: Действия с блоками и трата ЭНЕРГИИ
-        window.addEventListener('mousedown', (e) => {
-            if (!mouseLocked) return;
+  // --- 6. УПРАВЛЕНИЕ И ИГРОВОЙ ЦИКЛ ---
+  const controls = new THREE.PointerLockControls(camera, document.body);
+  const instructions = document.getElementById('instructions');
 
-            if (energy < 15) {
-                alert("Недостаточно энергии! Отдохните (подождите пару секунд).");
-                return;
-            }
+  instructions.addEventListener('click', () => {
+    controls.lock();
+  });
 
-            // Находим блок перед игроком
-            let targetX = Math.floor((player.x + Math.sin(player.yaw)*60) / blockSize);
-            let targetZ = Math.floor((player.z - Math.cos(player.yaw)*60) / blockSize);
-            
-            if(targetX >= 0 && targetX < worldSize && targetZ >= 0 && targetZ < worldSize) {
-                let chunk = world[targetX][targetZ];
-                let topY = chunk.length - 1;
-                while(topY >= 0 && chunk[topY] === 0) topY--;
+  controls.addEventListener('lock', () => {
+    instructions.style.display = 'none';
+  });
 
-                if (e.button === 0) { // ЛКМ — Ломаем верхний блок
-                    if(topY >= 0) {
-                        chunk[topY] = 0;
-                        energy -= 15; // Тратим энергию
-                    }
-                } else if (e.button === 2) { // ПКМ — Ставим выбранный предмет
-                    if(topY < 5) {
-                        chunk[topY + 1] = activeSlot;
-                        energy -= 10; // Тратим энергию
-                    }
-                }
-            }
-        });
-        // Отключаем стандартное меню по ПКМ
-        window.addEventListener('contextmenu', e => e.preventDefault());
+  controls.addEventListener('unlock', () => {
+    instructions.style.display = '';
+  });
 
+  camera.position.set(0, 7, 0);
 
-        // --- 5. ОТРИСОВКА ИЗОМЕТРИЧЕСКОГО/3D МИРА ---
-        function drawCube(x, y, z, type) {
-            let block = BLOCKS[type];
-            if (!block) return;
+  // Движение (WASD)
+  let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+  const velocity = new THREE.Vector3();
+  const direction = new THREE.Vector3();
 
-            // Проекция 3D координат на 2D экран относительно камеры игрока
-            let dx = x * blockSize - player.x;
-            let dz = z * blockSize - player.z;
-            let dy = y * (blockSize * 0.7) - player.y;
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyW') moveForward = true;
+    if (e.code === 'KeyS') moveBackward = true;
+    if (e.code === 'KeyA') moveLeft = true;
+    if (e.code === 'KeyD') moveRight = true;
+  });
 
-            // Вращение сцены вокруг камеры
-            let cos = Math.cos(-player.yaw);
-            let sin = Math.sin(-player.yaw);
-            let rx = dx * cos - dz * sin;
-            let rz = dx * sin + dz * cos;
+  document.addEventListener('keyup', (e) => {
+    if (e.code === 'KeyW') moveForward = false;
+    if (e.code === 'KeyS') moveBackward = false;
+    if (e.code === 'KeyA') moveLeft = false;
+    if (e.code === 'KeyD') moveRight = false;
+  });
 
-            // Если блок сзади нас — не рисуем его
-            if (rz < 10) return;
+  // Логика разрушения блоков (Raycasting)
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2(0, 0); // Центр экрана
 
-            // Перспектива
-            let fov = 400 / (rz * player.pitch);
-            let screenX = canvas.width / 2 + rx * fov;
-            let screenY = canvas.height / 2 - dy * fov;
-            let size = blockSize * fov;
+  window.addEventListener('click', (e) => {
+    if (!controls.isLocked) return;
 
-            if(isFirstPerson) {
-                // Корректировка высоты для 1-го лица
-                screenY += 120;
-            }
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(objects);
 
-            // Рисуем переднюю грань куба
-            ctx.fillStyle = block.color;
-            ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
-            ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-            ctx.strokeRect(screenX - size/2, screenY - size/2, size, size);
+    if (intersects.length > 0) {
+      const hitBlock = intersects[0].object;
+      
+      // Добавляем предмет в инвентарь
+      const blockName = hitBlock.userData.name;
+      player.inventory[blockName] = (player.inventory[blockName] || 0) + 1;
+      updateUI();
 
-            // Рисуем верхнюю грань (крышку блока)
-            ctx.fillStyle = block.topColor;
-            ctx.beginPath();
-            ctx.moveTo(screenX - size/2, screenY - size/2);
-            ctx.lineTo(screenX, screenY - size*0.8);
-            ctx.lineTo(screenX + size/2, screenY - size/2);
-            ctx.fill();
-        }
+      // Удаляем блок со сцены
+      scene.remove(hitBlock);
+      objects.splice(objects.indexOf(hitBlock), 1);
+    }
+  });
 
-        // Отрисовка других онлайн игроков
-        function drawRemotePlayer(p) {
-            let dx = p.x - player.x;
-            let dz = p.z - player.z;
-            let dy = 0 - player.y + 40;
+  // --- 7. UI И АНИМАЦИЯ ---
+  function updateUI() {
+    const rankEl = document.getElementById('player-rank');
+    rankEl.textContent = player.rank.name;
+    rankEl.style.backgroundColor = player.rank.color;
 
-            let cos = Math.cos(-player.yaw);
-            let sin = Math.sin(-player.yaw);
-            let rx = dx * cos - dz * sin;
-            let rz = dx * sin + dz * cos;
+    const invItems = Object.entries(player.inventory)
+      .map(([name, count]) => `${name}: ${count}`)
+      .join(', ');
+    document.getElementById('inventory').textContent = invItems || 'Пусто';
+  }
 
-            if (rz < 10) return;
+  let prevTime = performance.now();
 
-            let fov = 400 / (rz * player.pitch);
-            let screenX = canvas.width / 2 + rx * fov;
-            let screenY = canvas.height / 2 - dy * fov;
-            let size = player.radius * 2 * fov;
+  function animate() {
+    requestAnimationFrame(animate);
 
-            // Моделька игрока (капсула)
-            ctx.fillStyle = p.color;
-            ctx.beginPath();
-            ctx.arc(screenX, screenY, size, 0, Math.PI*2);
-            ctx.fill();
+    const time = performance.now();
+    if (controls.isLocked) {
+      const delta = (time - prevTime) / 1000;
 
-            // Никнейм над головой игрока
-            ctx.fillStyle = "white";
-            ctx.font = "12px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText(`[${p.role}] ${p.name}`, screenX, screenY - size - 5);
-        }
+      velocity.x -= velocity.x * 10.0 * delta;
+      velocity.z -= velocity.z * 10.0 * delta;
 
-        // --- 6. ОСНОВНОЙ КУРСОР/ЦИКЛ ИГРЫ ---
-        let lastTime = performance.now();
+      direction.z = Number(moveForward) - Number(moveBackward);
+      direction.x = Number(moveRight) - Number(moveLeft);
+      direction.normalize();
 
-        function gameLoop() {
-            let now = performance.now();
-            let dt = (now - lastTime) / 1000;
-            lastTime = now;
+      if (moveForward || moveBackward) velocity.z -= direction.z * 40.0 * delta;
+      if (moveLeft || moveRight) velocity.x -= direction.x * 40.0 * delta;
 
-            // 1. Восстановление энергии со временем
-            if (energy < 100) {
-                energy = Math.min(100, energy + dt * 12); // +12 единиц в секунду
-            }
-            document.getElementById('energy-bar').style.width = energy + '%';
+      controls.moveRight(-velocity.x * delta);
+      controls.moveForward(-velocity.z * delta);
+    }
+    prevTime = time;
 
-            // 2. Движение игрока
-            let moveX = 0;
-            let moveZ = 0;
-            if (keys['w']) { moveX += Math.sin(player.yaw); moveZ -= Math.cos(player.yaw); }
-            if (keys['s']) { moveX -= Math.sin(player.yaw); moveZ += Math.cos(player.yaw); }
-            if (keys['a']) { moveX -= Math.cos(player.yaw); moveZ -= Math.sin(player.yaw); }
-            if (keys['d']) { moveX += Math.cos(player.yaw); moveZ += Math.sin(player.yaw); }
+    renderer.render(scene, camera);
+  }
 
-            player.x += moveX * player.speed;
-            player.z += moveZ * player.speed;
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
 
-            // Симуляция движения других онлайн-игроков (чтобы мир казался живым)
-            onlinePlayers.forEach(p => {
-                p.x += Math.sin(now * 0.001 + p.id) * 0.5;
-                p.z += Math.cos(now * 0.001 * p.id) * 0.5;
-            });
+  updateUI();
+  animate();
+</script>
 
-            // 3. РЕНДЕРИНГ СЦЕНЫ
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Небо
-            ctx.fillStyle = '#87CEEB';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Отрисовка блоков (сзади наперед для корректного наложения слоев)
-            for (let y = 0; y < 6; y++) {
-                for (let x = 0; x < worldSize; x++) {
-                    for (let z = 0; z < worldSize; z++) {
-                        let type = world[x][z][y];
-                        if (type !== 0) {
-                            drawCube(x, y, z, type);
-                        }
-                    }
-                }
-            }
-
-            // Отрисовка других игроков в онлайне
-            onlinePlayers.forEach(p => drawRemotePlayer(p));
-
-            // Отрисовка собственного персонажа (Только если вид от 3-го лица!)
-            if (!isFirstPerson) {
-                ctx.fillStyle = '#ff0000'; // Наш скин — Красный
-                ctx.beginPath();
-                // По центру экрана, так как камера привязана к нам
-                let screenY = canvas.height / 2 + 50;
-                ctx.arc(canvas.width / 2, screenY, 20, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.fillStyle = "white";
-                ctx.font = "12px Arial";
-                ctx.textAlign = "center";
-                ctx.fillText("[Куратор] Разработчик (Вы)", canvas.width / 2, screenY - 25);
-            }
-
-            requestAnimationFrame(gameLoop);
-        }
-
-        // Старт игры
-        gameLoop();
-    </script>
 </body>
 </html>
+
 
