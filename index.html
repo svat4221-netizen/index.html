@@ -6,47 +6,48 @@
   <title>Minecraft Mobile Online</title>
   <style>
     * { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-    body { margin: 0; overflow: hidden; font-family: sans-serif; background: #000; }
+    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; }
 
-    /* Сенсорный джойстик */
+    /* Джойстик */
     #joystick-zone {
-      position: absolute; bottom: 30px; left: 30px;
-      width: 120px; height: 120px;
+      position: absolute; bottom: 25px; left: 25px;
+      width: 110px; height: 110px;
       background: rgba(255, 255, 255, 0.2);
       border: 2px solid rgba(255, 255, 255, 0.4);
       border-radius: 50%; z-index: 10;
     }
     #joystick-knob {
-      position: absolute; top: 35px; left: 35px;
-      width: 50px; height: 50px;
+      position: absolute; top: 32px; left: 32px;
+      width: 46px; height: 46px;
       background: rgba(255, 255, 255, 0.6);
       border-radius: 50%;
     }
 
-    /* Кнопки интерфейса */
+    /* Кнопки и панель */
     #btn-inv {
-      position: absolute; top: 20px; right: 20px;
-      padding: 12px 20px; background: rgba(0,0,0,0.7);
-      color: #fff; border: 2px solid #fff; border-radius: 8px;
-      font-weight: bold; font-size: 14px; z-index: 10;
+      position: absolute; top: 15px; right: 15px;
+      padding: 10px 18px; background: rgba(0,0,0,0.75);
+      color: #fff; border: 2px solid #fff; border-radius: 6px;
+      font-weight: bold; font-size: 13px; z-index: 10;
     }
 
     #info-panel {
-      position: absolute; top: 20px; left: 20px;
-      color: #fff; background: rgba(0,0,0,0.6);
-      padding: 10px; border-radius: 6px; font-size: 12px; z-index: 10;
+      position: absolute; top: 15px; left: 15px;
+      color: #fff; background: rgba(0,0,0,0.65);
+      padding: 8px 12px; border-radius: 6px; font-size: 11px; z-index: 10;
     }
 
-    /* Панель хотбара */
+    /* Панель быстрого доступа (Хотбар) */
     #hotbar {
       position: absolute; bottom: 15px; left: 50%;
       transform: translateX(-50%); display: flex; gap: 6px;
-      background: rgba(0,0,0,0.6); padding: 5px; border-radius: 8px; z-index: 10;
+      background: rgba(0,0,0,0.7); padding: 5px; border-radius: 6px; z-index: 10;
+      border: 2px solid #555;
     }
     .slot {
-      width: 45px; height: 45px; background: rgba(255,255,255,0.15);
-      border: 2px solid #888; border-radius: 5px; color: #fff;
-      font-size: 10px; display: flex; align-items: center; justify-content: center;
+      width: 48px; height: 48px; background: rgba(255,255,255,0.12);
+      border: 2px solid #888; border-radius: 4px; color: #fff;
+      font-size: 9px; display: flex; align-items: center; justify-content: center;
       text-align: center;
     }
     .slot.active { border-color: #ffe600; background: rgba(255,230,0,0.3); }
@@ -54,20 +55,20 @@
     /* Окно Инвентаря */
     #inventory-modal {
       position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.85); display: none; flex-direction: column;
+      background: rgba(0,0,0,0.88); display: none; flex-direction: column;
       align-items: center; justify-content: center; z-index: 20; color: #fff;
     }
     #inventory-modal.show { display: flex; }
     .inv-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
-      max-width: 90vw; max-height: 70vh; overflow-y: auto; padding: 10px;
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+      max-width: 92vw; max-height: 65vh; overflow-y: auto; padding: 10px;
     }
     .inv-card {
-      width: 70px; height: 70px; background: #2a2a2a; border: 2px solid #555;
-      border-radius: 8px; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; font-size: 11px; text-align: center;
+      width: 62px; height: 62px; background: #222; border: 2px solid #555;
+      border-radius: 6px; display: flex; align-items: center; justify-content: center;
+      font-size: 10px; text-align: center; padding: 2px;
     }
-    .inv-card:active { border-color: #00ffcc; background: #444; }
+    .inv-card:active { border-color: #00ffcc; background: #333; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -83,32 +84,34 @@
 <div id="joystick-zone"><div id="joystick-knob"></div></div>
 
 <div id="hotbar">
-  <div class="slot active" id="slot-0">Меч</div>
-  <div class="slot" id="slot-1">Кирка</div>
-  <div class="slot" id="slot-2">Блок</div>
+  <div class="slot active" id="slot-0">Алмазный меч</div>
+  <div class="slot" id="slot-1">Алмазная кирка</div>
+  <div class="slot" id="slot-2">Блок Травы</div>
+  <div class="slot" id="slot-3">Блок Кавня</div>
+  <div class="slot" id="slot-4">Пусто</div>
 </div>
 
 <div id="inventory-modal">
-  <h2>Инвентарь Игрока</h2>
+  <h3>Расширенный Инвентарь</h3>
   <div class="inv-grid" id="inv-items"></div>
-  <button id="btn-close-inv" style="margin-top:15px; padding:10px 30px; background:#e74c3c; color:#fff; border:none; border-radius:5px;">Закрыть</button>
+  <button id="btn-close-inv" style="margin-top:12px; padding:8px 24px; background:#e74c3c; color:#fff; border:none; border-radius:5px; font-weight:bold;">Закрыть</button>
 </div>
 
 <script>
   // ==========================================
-  // 1. ГЕНЕРАЦИЯ ПИКСЕЛЬНЫХ ТЕКСТУР (Canvas)
+  // 1. УЛУЧШЕННЫЕ ТЕКСТУРЫ
   // ==========================================
-  function generateTexture(colorHex, noiseAmount = 0.15) {
+  function generateTexture(baseColor, noiseColor, density = 0.25) {
     const canvas = document.createElement('canvas');
     canvas.width = 16; canvas.height = 16;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = colorHex;
+    ctx.fillStyle = baseColor;
     ctx.fillRect(0, 0, 16, 16);
     
     for (let x = 0; x < 16; x++) {
       for (let y = 0; y < 16; y++) {
-        if (Math.random() < noiseAmount) {
-          ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)';
+        if (Math.random() < density) {
+          ctx.fillStyle = Math.random() > 0.5 ? noiseColor : 'rgba(0,0,0,0.2)';
           ctx.fillRect(x, y, 1, 1);
         }
       }
@@ -120,29 +123,33 @@
   }
 
   const textures = {
-    grass: generateTexture('#55aa33'),
-    dirt: generateTexture('#795538'),
-    wood: generateTexture('#5c4033'),
-    leaves: generateTexture('#2d8a4e'),
-    stone: generateTexture('#888888'),
-    planks: generateTexture('#b8860b')
+    grass: generateTexture('#4ba632', '#69ca4d'),
+    dirt: generateTexture('#865836', '#5c3a21'),
+    stone: generateTexture('#7d7d7d', '#aaaaaa'),
+    wood: generateTexture('#523924', '#3d2817'),
+    leaves: generateTexture('#257e33', '#3bb04d'),
+    planks: generateTexture('#b2874a', '#805d2c'),
+    diamond: generateTexture('#25c2cd', '#ffffff'),
+    iron: generateTexture('#d1d1d1', '#ffffff')
   };
 
   const materials = {
     grass: new THREE.MeshLambertMaterial({ map: textures.grass }),
     dirt: new THREE.MeshLambertMaterial({ map: textures.dirt }),
+    stone: new THREE.MeshLambertMaterial({ map: textures.stone }),
     wood: new THREE.MeshLambertMaterial({ map: textures.wood }),
     leaves: new THREE.MeshLambertMaterial({ map: textures.leaves }),
-    stone: new THREE.MeshLambertMaterial({ map: textures.stone }),
     planks: new THREE.MeshLambertMaterial({ map: textures.planks }),
-    skin: new THREE.MeshLambertMaterial({ color: 0xffdbac })
+    diamond: new THREE.MeshLambertMaterial({ map: textures.diamond }),
+    iron: new THREE.MeshLambertMaterial({ map: textures.iron }),
+    skin: new THREE.MeshLambertMaterial({ color: 0xdbad84 })
   };
 
   // ==========================================
-  // 2. СОЗДАНИЕ 3D-СЦЕНЫ
+  // 2. 3D-СЦЕНА И СВЕТ
   // ==========================================
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x78a7ff);
+  scene.background = new THREE.Color(0x7ec0ee);
 
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
   const renderer = new THREE.WebGLRenderer({ antialias: false });
@@ -150,17 +157,17 @@
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   document.body.appendChild(renderer.domElement);
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
   scene.add(ambientLight);
-  const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-  dirLight.position.set(20, 40, 20);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+  dirLight.position.set(30, 50, 30);
   scene.add(dirLight);
 
   // ==========================================
-  // 3. ГЕНЕРАЦИЯ МИРА (Блоки, Деревья, Дома)
+  // 3. РАСШИРЕННЫЙ МИР (64x64)
   // ==========================================
   const boxGeo = new THREE.BoxGeometry(1, 1, 1);
-  const worldSize = 24;
+  const worldSize = 64;
 
   for (let x = -worldSize/2; x < worldSize/2; x++) {
     for (let z = -worldSize/2; z < worldSize/2; z++) {
@@ -192,70 +199,94 @@
     }
   }
 
-  function spawnHouse(x, z) {
-    for (let hx = 0; hx < 4; hx++) {
-      for (let hz = 0; hz < 4; hz++) {
-        for (let hy = 1; hy <= 3; hy++) {
-          if (hx === 0 || hx === 3 || hz === 0 || hz === 3) {
-            if (hx === 1 && hz === 0 && hy <= 2) continue; // Дверной проем
-            const wall = new THREE.Mesh(boxGeo, materials.planks);
-            wall.position.set(x + hx, hy, z + hz);
-            scene.add(wall);
-          }
-        }
-        const roof = new THREE.Mesh(boxGeo, materials.wood);
-        roof.position.set(x + hx, 4, z + hz);
-        scene.add(roof);
-      }
+  // Спавним деревья по карте
+  for(let i=0; i<20; i++) {
+    let rx = Math.floor(Math.random() * 50 - 25);
+    let rz = Math.floor(Math.random() * 50 - 25);
+    spawnTree(rx, rz);
+  }
+
+  // ==========================================
+  // 4. УЗКАЯ РУКА И ПРЕДМЕТЫ В РУКЕ
+  // ==========================================
+  const playerHandGroup = new THREE.Group();
+
+  // Узкая форма руки Стива (0.16 x 0.6 x 0.16)
+  const handGeo = new THREE.BoxGeometry(0.16, 0.6, 0.16);
+  const handMesh = new THREE.Mesh(handGeo, materials.skin);
+  handMesh.position.set(0.28, -0.28, -0.45);
+  handMesh.rotation.set(0.2, -0.1, 0);
+  playerHandGroup.add(handMesh);
+
+  // Контейнер для предмета в руке
+  const heldItemContainer = new THREE.Group();
+  heldItemContainer.position.set(0.28, -0.2, -0.5);
+  playerHandGroup.add(heldItemContainer);
+
+  camera.add(playerHandGroup);
+  scene.add(camera);
+  camera.position.set(0, 1.7, 0);
+
+  // Функция отображения предмета в руке
+  function updateHeldItem(itemName) {
+    // Очищаем текущий предмет
+    while(heldItemContainer.children.length > 0){ 
+      heldItemContainer.remove(heldItemContainer.children[0]); 
+    }
+
+    if (!itemName || itemName === "Пусто") return;
+
+    if (itemName.includes("меч")) {
+      // Модель меча
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.5, 0.02), materials.diamond);
+      blade.position.set(0, 0.2, 0);
+      const guard = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.04), materials.wood);
+      guard.position.set(0, -0.05, 0);
+      heldItemContainer.add(blade);
+      heldItemContainer.add(guard);
+      heldItemContainer.rotation.set(-0.5, 0.3, 0);
+    } 
+    else if (itemName.includes("кирка")) {
+      // Модель кирки
+      const handle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.5, 0.04), materials.wood);
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.06, 0.06), materials.diamond);
+      head.position.set(0, 0.22, 0);
+      heldItemContainer.add(handle);
+      heldItemContainer.add(head);
+      heldItemContainer.rotation.set(-0.4, 0.2, 0);
+    } 
+    else if (itemName.includes("Блок")) {
+      // Маленький блок в руке
+      let blockMat = materials.dirt;
+      if (itemName.includes("Травы")) blockMat = materials.grass;
+      if (itemName.includes("Камня")) blockMat = materials.stone;
+      if (itemName.includes("Досок")) blockMat = materials.planks;
+
+      const miniBlock = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), blockMat);
+      heldItemContainer.add(miniBlock);
+      heldItemContainer.rotation.set(0, 0.4, 0);
     }
   }
 
-  spawnTree(4, 4);
-  spawnTree(-5, 6);
-  spawnTree(6, -5);
-  spawnHouse(-6, -6);
-
   // ==========================================
-  // 4. МОБЫ (Житель, Зомби, Овечка)
+  // 5. МОБЫ
   // ==========================================
   const mobs = [];
-  function createMob(x, z, colorHex, isAnimal = false) {
+  function createMob(x, z, colorHex) {
     const mobGroup = new THREE.Group();
-    const mat = new THREE.MeshLambertMaterial({ color: colorHex });
-    
-    if (isAnimal) {
-      const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 1.2), mat);
-      body.position.y = 0.6;
-      mobGroup.add(body);
-    } else {
-      const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.6, 0.4), mat);
-      body.position.y = 0.8;
-      mobGroup.add(body);
-    }
-
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.5, 0.4), new THREE.MeshLambertMaterial({ color: colorHex }));
+    body.position.y = 0.75;
+    mobGroup.add(body);
     mobGroup.position.set(x, 0, z);
     scene.add(mobGroup);
     mobs.push({ mesh: mobGroup, targetX: x, targetZ: z, timer: 0 });
   }
 
-  createMob(2, -2, 0x8b4513); // Житель
-  createMob(-2, 3, 0x2e8b57);  // Зомби
-  createMob(5, -4, 0xeeeeee, true); // Овечка
+  createMob(3, -3, 0x8b4513); // Житель
+  createMob(-4, 4, 0x2e8b57);  // Зомби
 
   // ==========================================
-  // 5. РУКА ИГРОКА
-  // ==========================================
-  const handGeo = new THREE.BoxGeometry(0.25, 0.7, 0.25);
-  const hand = new THREE.Mesh(handGeo, materials.skin);
-  hand.position.set(0.35, -0.35, -0.5);
-  hand.rotation.set(0.2, -0.1, 0);
-  camera.add(hand);
-  scene.add(camera);
-
-  camera.position.set(0, 1.7, 0);
-
-  // ==========================================
-  // 6. СЕНСОРНОЕ УПРАВЛЕНИЕ (Мобильное)
+  // 6. СЕНСОРНОЕ УПРАВЛЕНИЕ
   // ==========================================
   let moveX = 0, moveZ = 0;
   const joyZone = document.getElementById('joystick-zone');
@@ -275,15 +306,15 @@
       if (touch.identifier === joyTouchId) {
         let dx = touch.clientX - joyBaseX;
         let dy = touch.clientY - joyBaseY;
-        const dist = Math.min(Math.hypot(dx, dy), 40);
+        const dist = Math.min(Math.hypot(dx, dy), 35);
         const angle = Math.atan2(dy, dx);
 
         const knobX = Math.cos(angle) * dist;
         const knobY = Math.sin(angle) * dist;
         joyKnob.style.transform = `translate(${knobX}px, ${knobY}px)`;
 
-        moveX = knobX / 40;
-        moveZ = knobY / 40;
+        moveX = knobX / 35;
+        moveZ = knobY / 35;
       }
     }
   });
@@ -300,7 +331,7 @@
   window.addEventListener('touchend', resetJoystick);
   window.addEventListener('touchcancel', resetJoystick);
 
-  // Поворот камеры свайпом справа
+  // Поворот камеры
   let lookTouchId = null, lastTouchX = 0, lastTouchY = 0;
   let yaw = 0, pitch = 0;
 
@@ -343,30 +374,31 @@
   window.addEventListener('touchcancel', resetLook);
 
   // ==========================================
-  // 7. ЛОГИКА ИНВЕНТАРЯ
+  // 7. РАСШИРЕННЫЙ ИНВЕНТАРЬ
   // ==========================================
   const invModal = document.getElementById('inventory-modal');
   const invGrid = document.getElementById('inv-items');
   
   const inventoryData = [
-    { name: "Алмазный меч", type: "weapon" },
-    { name: "Алмазная кирка", type: "tool" },
-    { name: "Алмазная шлем", type: "armor" },
-    { name: "Алмазный нагрудник", type: "armor" },
-    { name: "Блок Травы", type: "block" },
-    { name: "Блок Досок", type: "block" },
-    { name: "Блок Камня", type: "block" },
-    { name: "Яйцо Жителя", type: "spawn" }
+    { name: "Алмазный меч" }, { name: "Железный меч" }, { name: "Деревянный меч" },
+    { name: "Алмазная кирка" }, { name: "Железная кирка" }, { name: "Деревянная кирка" },
+    { name: "Алмазный шлем" }, { name: "Алмазный нагрудник" }, { name: "Алмазные поножи" },
+    { name: "Блок Травы" }, { name: "Блок Земли" }, { name: "Блок Камня" },
+    { name: "Блок Досок" }, { name: "Блок Дерева" }, { name: "Блок Листвы" },
+    { name: "Яйцо Жителя" }, { name: "Яйцо Зомби" }, { name: "Пусто" }
   ];
 
   let selectedSlotIndex = 0;
+  let hotbarContents = ["Алмазный меч", "Алмазная кирка", "Блок Травы", "Блок Камня", "Пусто"];
 
   inventoryData.forEach(item => {
     const card = document.createElement('div');
     card.className = 'inv-card';
     card.innerText = item.name;
     card.onclick = () => {
+      hotbarContents[selectedSlotIndex] = item.name;
       document.getElementById(`slot-${selectedSlotIndex}`).innerText = item.name;
+      updateHeldItem(item.name);
       invModal.classList.remove('show');
     };
     invGrid.appendChild(card);
@@ -380,8 +412,12 @@
       document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
       slot.classList.add('active');
       selectedSlotIndex = idx;
+      updateHeldItem(hotbarContents[idx]);
     };
   });
+
+  // Инициализация стартового предмета
+  updateHeldItem(hotbarContents[0]);
 
   // ==========================================
   // 8. ИГРОВОЙ ЦИКЛ
@@ -391,9 +427,8 @@
   function animate() {
     requestAnimationFrame(animate);
 
-    // Движение игрока
     if (moveX !== 0 || moveZ !== 0) {
-      const speed = 0.08;
+      const speed = 0.09;
       const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
       forward.y = 0; forward.normalize();
       const side = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
@@ -402,22 +437,10 @@
       camera.position.addScaledVector(forward, -moveZ * speed);
       camera.position.addScaledVector(side, moveX * speed);
 
-      // Анимация рук при ходьбе
+      // Легкое покачивание руки при ходьбе
       handTime += 0.15;
-      hand.position.y = -0.35 + Math.sin(handTime) * 0.03;
+      playerHandGroup.position.y = Math.sin(handTime) * 0.02;
     }
-
-    // Движение мобов
-    mobs.forEach(mob => {
-      mob.timer += 0.01;
-      if (mob.timer > 3) {
-        mob.targetX = mob.mesh.position.x + (Math.random() * 4 - 2);
-        mob.targetZ = mob.mesh.position.z + (Math.random() * 4 - 2);
-        mob.timer = 0;
-      }
-      mob.mesh.position.x += (mob.targetX - mob.mesh.position.x) * 0.01;
-      mob.mesh.position.z += (mob.targetZ - mob.mesh.position.z) * 0.01;
-    });
 
     renderer.render(scene, camera);
   }
@@ -432,6 +455,4 @@
 </script>
 </body>
 </html>
-
-
-
+ 
