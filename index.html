@@ -1,1 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Мой 3D Мир (Воксели)</title>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    #ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background: rgba(0,0,0,0.6);
+      padding: 10px;
+      border-radius: 5px;
+      pointer-events: none;
+    }
+    #crosshair {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 10px; height: 10px;
+      margin-top: -5px; margin-left: -5px;
+      border: 2px solid white;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+  </style>
+  <!-- Подключаем 3D-библиотеку Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+<div id="ui">
+  <h3>Управление: WASD + Мышь</h3>
+  <p>Клик по экрану — активировать управление</p>
+  <p id="roleDisplay">Ваша роль: Загрузка...</p>
+</div>
+<div id="crosshair"></div>
+
+<script>
+  // ==========================================
+  // 1. ИНИЦИАЛИЗАЦИЯ ИЕРАРХИИ РОЛЕЙ
+  // ==========================================
+  const ROLES = {
+    PLAYER: { id: 1, name: "Обычный игрок", color: "#ffffff" },
+    MODERATOR: { id: 2, name: "Модератор", color: "#0000ff" },
+    ADMIN: { id: 3, name: "Администратор", color: "#ffaa00" },
+    CURATOR: { id: 4, name: "Куратор", color: "#ff00ff" },
+    CREATOR: { id: 5, name: "Создатель", color: "#ff0000" }
+  };
+
+  // Текщая роль (по умолчанию — Создатель для локального тестирования)
+  let currentUserRole = ROLES.CREATOR;
+  document.getElementById('roleDisplay').innerText = "Ваша роль: " + currentUserRole.name;
+
+  // ==========================================
+  // 2. СОЗДАНИЕ 3D-СЦЕНЫ И КАМЕРЫ
+  // ==========================================
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87ceeb); // Голубое небо
+
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  // Освещение
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambientLight);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  dirLight.position.set(20, 40, 20);
+  scene.add(dirLight);
+
+  // ==========================================
+  // 3. ГЕНЕРАЦИЯ БАЗОВОГО МИРА (БЛОКИ)
+  // ==========================================
+  const blockGeometry = new THREE.BoxGeometry(1, 1, 1);
+  
+  // Базовые цвета для типов блоков (заменимы на Текстуры)
+  const materials = {
+    grass: new THREE.MeshLambertMaterial({ color: 0x55aa55 }),
+    dirt: new THREE.MeshLambertMaterial({ color: 0x8b5a2b }),
+    stone: new THREE.MeshLambertMaterial({ color: 0x888888 })
+  };
+
+  // Простая генерация чанка земли 16x16
+  const worldSize = 16;
+  for (let x = -worldSize/2; x < worldSize/2; x++) {
+    for (let z = -worldSize/2; z < worldSize/2; z++) {
+      // Верхний блок травы
+      const grassBlock = new THREE.Mesh(blockGeometry, materials.grass);
+      grassBlock.position.set(x, 0, z);
+      scene.add(grassBlock);
+
+      // Блок земли снизу
+      const dirtBlock = new THREE.Mesh(blockGeometry, materials.dirt);
+      dirtBlock.position.set(x, -1, z);
+      scene.add(dirtBlock);
+    }
+  }
+
+  // ==========================================
+  // 4. ЗАГОТОВКА ДЛЯ МОБОВ (Зомби / Жители)
+  // ==========================================
+  function createMob(x, y, z, color) {
+    const mobGroup = new THREE.Group();
+    // Тело
+    const bodyGeo = new THREE.BoxGeometry(0.6, 1.8, 0.6);
+    const mobMat = new THREE.MeshLambertMaterial({ color: color });
+    const body = new THREE.Mesh(bodyGeo, mobMat);
+    body.position.y = 0.9;
+    mobGroup.add(body);
+    
+    mobGroup.position.set(x, y, z);
+    scene.add(mobGroup);
+    return mobGroup;
+  }
+
+  // Создаем тестового зомби (зеленый) и жителя (коричневый)
+  const zombie = createMob(3, 0.5, 3, 0x2e8b57);
+  const villager = createMob(-3, 0.5, -3, 0x8b4513);
+
+  // ==========================================
+  // 5. УПРАВЛЕНИЕ ПЕРСОНАЖЕМ (WASD)
+  // ==========================================
+  camera.position.set(0, 2, 5);
+
+  let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+  const velocity = new THREE.Vector3();
+  const direction = new THREE.Vector3();
+
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyW') moveForward = true;
+    if (e.code === 'KeyS') moveBackward = true;
+    if (e.code === 'KeyA') moveLeft = true;
+    if (e.code === 'KeyD') moveRight = true;
+  });
+
+  document.addEventListener('keyup', (e) => {
+    if (e.code === 'KeyW') moveForward = false;
+    if (e.code === 'KeyS') moveBackward = false;
+    if (e.code === 'KeyA') moveLeft = false;
+    if (e.code === 'KeyD') moveRight = false;
+  });
+
+  // Захват мыши для обзора
+  document.body.addEventListener('click', () => {
+    document.body.requestPointerLock();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (document.pointerLockElement === document.body) {
+      camera.rotation.y -= e.movementX * 0.002;
+    }
+  });
+
+  // ==========================================
+  // 6. ИГРОВОЙ ЦИКЛ (АНИМАЦИЯ)
+  // ==========================================
+  function animate() {
+    requestAnimationFrame(animate);
+
+    // Движение игрока
+    const speed = 0.1;
+    if (moveForward) camera.translateZ(-speed);
+    if (moveBackward) camera.translateZ(speed);
+    if (moveLeft) camera.translateX(-speed);
+    if (moveRight) camera.translateX(speed);
+
+    // Фиксация высоты камеры
+    camera.position.y = 1.8;
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  // Адаптация под размер окна
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+</script>
+</body>
+</html>
 
