@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -48,6 +48,7 @@
             font-weight: bold;
             background: #222;
             border-radius: 4px;
+            text-align: center;
         }
 
         .slot.active {
@@ -79,7 +80,7 @@
 
         #jump-btn {
             position: absolute;
-            bottom: 40px;
+            bottom: 30px;
             right: 20px;
             width: 65px;
             height: 65px;
@@ -88,43 +89,53 @@
             border-radius: 50%;
             color: white;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 11px;
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 20;
         }
 
-        #mode-btn {
+        /* Круглая кнопка режима над прыжком */
+        #action-btn {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            padding: 8px 12px;
-            background: rgba(0,0,0,0.6);
+            bottom: 110px;
+            right: 20px;
+            width: 65px;
+            height: 65px;
+            background: rgba(255,255,255,0.3);
+            border: 2px solid white;
+            border-radius: 50%;
             color: white;
-            border: 1px solid white;
-            border-radius: 6px;
-            font-size: 12px;
+            font-weight: bold;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             z-index: 20;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
     <div id="crosshair"></div>
-    <button id="mode-btn">Режим: Ломать</button>
+    
+    <div id="action-btn">ЛОМАТЬ</div>
+    <div id="jump-btn">ПРАЖОК</div>
 
     <div id="hotbar">
         <div class="slot active" onclick="selectSlot(0)">Трава</div>
         <div class="slot" onclick="selectSlot(1)">Земля</div>
         <div class="slot" onclick="selectSlot(2)">Камень</div>
         <div class="slot" onclick="selectSlot(3)">Дерево</div>
+        <div class="slot" onclick="selectSlot(4)">Доски</div>
+        <div class="slot" onclick="selectSlot(5)">Железо</div>
     </div>
 
     <div id="joystick-container">
         <div id="joystick-stick"></div>
     </div>
-    <div id="jump-btn">ПРАЖОК</div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
@@ -144,7 +155,7 @@
         dirLight.position.set(10, 20, 10);
         scene.add(dirLight);
 
-        // 2. Генератор текстур
+        // 2. Генерация пиксельных текстур
         function createPixelTexture(color, noise = true) {
             const canvas = document.createElement('canvas');
             canvas.width = 16;
@@ -168,23 +179,18 @@
             return new THREE.MeshLambertMaterial({ map: texture });
         }
 
-        // Текстура для боковины травы (зеленый верх, земляной низ)
         function createGrassSideTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 16;
             canvas.height = 16;
             const ctx = canvas.getContext('2d');
-            
-            ctx.fillStyle = '#866043'; // Земля
+            ctx.fillStyle = '#866043';
             ctx.fillRect(0, 0, 16, 16);
-            
-            ctx.fillStyle = '#557a2b'; // Верх травы
+            ctx.fillStyle = '#557a2b';
             ctx.fillRect(0, 0, 16, 4);
-            
             for(let i = 0; i < 16; i++) {
                 if(Math.random() > 0.5) ctx.fillRect(i, 4, 1, 2);
             }
-
             const texture = new THREE.CanvasTexture(canvas);
             texture.magFilter = THREE.NearestFilter;
             return new THREE.MeshLambertMaterial({ map: texture });
@@ -195,16 +201,41 @@
         const matGrassSide = createGrassSideTexture();
         const matStone = createPixelTexture('#808080');
         const matWood = createPixelTexture('#674a27');
+        const matPlanks = createPixelTexture('#a0754c');
+        const matIronOre = createPixelTexture('#d8af93');
+        const matSkin = createPixelTexture('#c58c65', false); // Текстура кожи для руки
 
-        // Материалы блоков (6 граней)
         const materials = {
             grass: [matGrassSide, matGrassSide, matGrassTop, matDirt, matGrassSide, matGrassSide],
             dirt: matDirt,
             stone: matStone,
-            wood: matWood
+            wood: matWood,
+            planks: matPlanks,
+            iron: matIronOre
         };
 
-        // 3. Построение мира
+        // 3. Рука игрока и удерживаемый предмет
+        const armGroup = new THREE.Group();
+        
+        // Прямоугольная рука
+        const armGeo = new THREE.BoxGeometry(0.25, 0.7, 0.25);
+        const armMesh = new THREE.Mesh(armGeo, matSkin);
+        armMesh.position.set(0, -0.2, 0);
+        armGroup.add(armMesh);
+
+        // Мини-блок в руке
+        const itemInHandGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+        let itemInHandMesh = new THREE.Mesh(itemInHandGeo, materials.grass);
+        itemInHandMesh.position.set(0, 0.25, -0.15);
+        armGroup.add(itemInHandMesh);
+
+        // Позиционируем руку перед камерой
+        armGroup.position.set(0.4, -0.4, -0.6);
+        armGroup.rotation.y = -Math.PI / 8;
+        camera.add(armGroup);
+        scene.add(camera);
+
+        // 4. Построение мира
         const blockGeo = new THREE.BoxGeometry(1, 1, 1);
         const blocks = new Map();
 
@@ -235,22 +266,8 @@
             }
         }
 
-        // 4. Логика управления
-        camera.position.set(0, 5, 0);
-        let moveVector = { x: 0, z: 0 };
-        let velY = 0, canJump = false;
-        let isBuildMode = false;
-
-        // Переключение режима (Ломать / Ставить)
-        const modeBtn = document.getElementById('mode-btn');
-        modeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            isBuildMode = !isBuildMode;
-            modeBtn.innerText = isBuildMode ? "Режим: Ставить" : "Режим: Ломать";
-        });
-
-        // Выбор слота
-        const blockTypes = ['grass', 'dirt', 'stone', 'wood'];
+        // 5. Переключение слотов и обновление предмета в руке
+        const blockTypes = ['grass', 'dirt', 'stone', 'wood', 'planks', 'iron'];
         let activeTypeIdx = 0;
 
         window.selectSlot = function(idx) {
@@ -258,9 +275,28 @@
             document.querySelectorAll('.slot').forEach((el, i) => {
                 el.classList.toggle('active', i === idx);
             });
+            
+            // Обновляем предмет в руке
+            const selectedType = blockTypes[idx];
+            itemInHandMesh.material = materials[selectedType];
         };
 
-        // Виртуальный джойстик
+        // 6. Управление
+        camera.position.set(0, 5, 0);
+        let moveVector = { x: 0, z: 0 };
+        let velY = 0, canJump = false;
+        let isBuildMode = false;
+
+        // Кнопка режима (Ломать / Ставить)
+        const actionBtn = document.getElementById('action-btn');
+        actionBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            isBuildMode = !isBuildMode;
+            actionBtn.innerText = isBuildMode ? "СТАВИТЬ" : "ЛОМАТЬ";
+        });
+
+        // Джойстик
         const joyContainer = document.getElementById('joystick-container');
         const joyStick = document.getElementById('joystick-stick');
 
@@ -293,7 +329,7 @@
             if (canJump) { velY = 0.12; canJump = false; }
         });
 
-        // Взаимодействие с миром по тапу
+        // Взаимодействие с миром
         const raycaster = new THREE.Raycaster();
         let touchStartX = 0, touchStartY = 0;
 
@@ -309,7 +345,6 @@
                 const endX = e.changedTouches[0].clientX;
                 const endY = e.changedTouches[0].clientY;
 
-                // Если это был короткий тап без движения
                 if (Math.hypot(endX - touchStartX, endY - touchStartY) < 10) {
                     const mouse = new THREE.Vector2(
                         (endX / window.innerWidth) * 2 - 1,
@@ -321,6 +356,11 @@
 
                     if (intersects.length > 0 && intersects[0].distance < 6) {
                         const hit = intersects[0];
+                        
+                        // Анимация удара рукой
+                        armGroup.position.z = -0.4;
+                        setTimeout(() => { armGroup.position.z = -0.6; }, 100);
+
                         if (!isBuildMode) {
                             removeBlock(hit.object.userData.key);
                         } else {
@@ -333,15 +373,13 @@
             }
         });
 
-        // 5. Игровой цикл
+        // 7. Игровой цикл
         function animate() {
             requestAnimationFrame(animate);
 
-            // Движение игрока относительно направления джойстика
             camera.translateX(moveVector.x * 0.08);
             camera.translateZ(moveVector.z * 0.08);
 
-            // Гравитация
             camera.position.y += velY;
             velY -= 0.005;
 
@@ -364,3 +402,8 @@
     </script>
 </body>
 </html>
+
+            }
+        }
+
+        
